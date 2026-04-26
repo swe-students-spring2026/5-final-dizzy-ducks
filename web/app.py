@@ -4,6 +4,7 @@ from web.auth import auth_bp
 from web.dashboard import dashboard_bp
 from web.onboarding import onboarding_bp
 from web.repositories import InMemoryRepository, MongoRepository
+from web.sample_data import seed_sample_gigs
 from web.tags import TAG_LABELS
 
 
@@ -13,11 +14,19 @@ def create_app(config: dict | None = None, repository=None) -> Flask:
         SECRET_KEY="dev",
         MONGODB_URI=None,
         MONGODB_DB_NAME="dizzy_ducks",
+        SEED_SAMPLE_GIGS=True,
     )
     if config:
         app.config.update(config)
 
     app.repository = repository or _build_repository(app.config)
+    if (
+        repository is None
+        and app.config["SEED_SAMPLE_GIGS"]
+        and isinstance(app.repository, InMemoryRepository)
+    ):
+        seed_sample_gigs(app.repository)
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(dashboard_bp)

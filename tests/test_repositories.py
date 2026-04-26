@@ -9,6 +9,15 @@ def test_create_app_builds_in_memory_repository_by_default():
     app = create_app({"SECRET_KEY": "test-secret", "TESTING": True})
 
     assert isinstance(app.repository, InMemoryRepository)
+    assert len(app.repository.list_open_gigs()) == 6
+
+
+def test_create_app_can_disable_sample_gigs():
+    app = create_app(
+        {"SECRET_KEY": "test-secret", "SEED_SAMPLE_GIGS": False, "TESTING": True}
+    )
+
+    assert app.repository.list_open_gigs() == []
 
 
 def test_in_memory_repository_filters_open_gigs_by_tags_and_search(repository):

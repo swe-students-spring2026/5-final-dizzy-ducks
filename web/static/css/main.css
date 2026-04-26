@@ -84,6 +84,12 @@ form {
   border-radius: 6px;
 }
 
+.panel + .panel,
+.panel + .gig-list,
+.gig-list + .panel {
+  margin-top: 1rem;
+}
+
 .narrow {
   max-width: 440px;
 }
@@ -120,4 +126,72 @@ form {
 
 .tag-option input {
   width: auto;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-header h1,
+.dashboard-header p,
+.gig-card h2,
+.gig-card p,
+.empty-state h2,
+.empty-state p {
+  margin: 0;
+}
+
+.secondary-button {
+  display: inline-block;
+  border: 1px solid #0f5f6f;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  text-decoration: none;
+}
+
+.filter-form {
+  gap: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.gig-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.gig-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #dde3e4;
+  border-radius: 6px;
+}
+
+.gig-card h2 {
+  font-size: 1.2rem;
+}
+
+.meta {
+  color: #5b6a70;
+}
+
+.pay {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

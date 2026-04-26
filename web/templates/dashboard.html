@@ -1,8 +1,57 @@
 {% extends "base.html" %}
 {% block title %}Dashboard | Dizzy Ducks{% endblock %}
 {% block content %}
-  <section class="panel">
-    <h1>Dashboard</h1>
-    <p>Your job dashboard will show matching gigs here.</p>
+  <section class="panel dashboard-header">
+    <div>
+      <h1>Find gigs</h1>
+      <p>{{ gigs|length }} open {{ "gig" if gigs|length == 1 else "gigs" }}</p>
+    </div>
+    <a class="secondary-button"
+       href="{{ url_for('onboarding.choose_tags') }}">Edit tags</a>
   </section>
+  <section class="panel">
+    <form class="filter-form" method="get">
+      <label>
+        Search
+        <input name="q" value="{{ search }}" placeholder="Title, place, or detail">
+      </label>
+      <fieldset class="tag-grid">
+        <legend>Filter by tags</legend>
+        {% for tag in job_tags %}
+          <label class="tag-option">
+            <input type="checkbox"
+                   name="tag"
+                   value="{{ tag }}"
+                   {% if tag in selected_tags %}checked{% endif %}>
+            {{ tag_labels[tag] }}
+          </label>
+        {% endfor %}
+      </fieldset>
+      <div class="actions">
+        <button type="submit">Apply filters</button>
+        <a href="{{ url_for('dashboard.index') }}">Use saved tags</a>
+      </div>
+    </form>
+  </section>
+  {% if gigs %}
+    <section class="gig-list" aria-label="Open gigs">
+      {% for gig in gigs %}
+        <article class="gig-card">
+          <div>
+            <h2>{{ gig.title }}</h2>
+            <p class="meta">
+              {{ tag_labels.get(gig.category, gig.category) }} &middot; {{ gig.location }} &middot; {{ gig.date }}
+            </p>
+          </div>
+          <p class="pay">{{ gig.pay }}</p>
+          <p>{{ gig.description }}</p>
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <section class="panel empty-state">
+      <h2>No open gigs match your filters.</h2>
+      <p>Try a different search or update your saved tags.</p>
+    </section>
+  {% endif %}
 {% endblock %}

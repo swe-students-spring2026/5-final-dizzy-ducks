@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Choose job tags | Dizzy Ducks{% endblock %}
+{% block content %}
+  <section class="panel">
+    <h1>Choose job tags</h1>
+    <p>Select the kinds of jobs you want to see first.</p>
+    {% if errors %}
+      <ul class="errors">
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <form method="post">
+      <fieldset class="tag-grid">
+        <legend>Job tags</legend>
+        {% for tag in job_tags %}
+          <label class="tag-option">
+            <input type="checkbox"
+                   name="tags"
+                   value="{{ tag }}"
+                   {% if tag in selected_tags %}checked{% endif %}>
+            {{ tag_labels[tag] }}
+          </label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit">Save tags</button>
+    </form>
+  </section>
+{% endblock %}

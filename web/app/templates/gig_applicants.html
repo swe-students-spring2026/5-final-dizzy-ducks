@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Applicants — {{ gig.title }}{% endblock %}
+{% block content %}
+  <div class="row" style="margin-bottom: 12px;">
+    <div>
+      <h1 style="margin: 0;">Applicants</h1>
+      <div class="muted">{{ gig.title }} · <span class="pill">{{ gig.status or "open" }}</span></div>
+    </div>
+    <div>
+      <a class="btn" href="/my/gigs">Back</a>
+    </div>
+  </div>
+
+  <div class="grid">
+    {% if enriched|length == 0 %}
+      <div class="card">
+        <p style="margin: 0;">No applications yet.</p>
+      </div>
+    {% endif %}
+
+    {% for row in enriched %}
+      {% set app = row.application %}
+      {% set user = row.applicant %}
+      {% set stats = row.stats %}
+      <div class="card">
+        <div class="row" style="align-items: flex-start;">
+          <div style="flex: 1;">
+            <div style="font-size: 16px; font-weight: 700;">
+              {{ user.name or "Unnamed" }}
+              <span class="muted">({{ user.email or "no email" }})</span>
+            </div>
+            <div class="muted" style="margin-top: 6px;">
+              <span class="pill">⭐ {{ stats.rating_avg }} ({{ stats.rating_count }})</span>
+              <span class="pill">jobs: {{ stats.jobs_completed }}</span>
+              <span class="pill">application: {{ app.status or "pending" }}</span>
+            </div>
+            {% if app.message %}
+              <div style="margin-top: 10px;">
+                <div class="muted" style="margin-bottom: 6px;">Message</div>
+                <div style="white-space: pre-wrap;">{{ app.message }}</div>
+              </div>
+            {% endif %}
+          </div>
+
+          <div style="min-width: 220px;">
+            <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision" class="grid">
+              <input type="hidden" name="action" value="accept" />
+              <button class="btn" type="submit">Accept</button>
+            </form>
+            <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision" class="grid" style="margin-top: 8px;">
+              <input type="hidden" name="action" value="reject" />
+              <button class="btn btn-danger" type="submit">Reject</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

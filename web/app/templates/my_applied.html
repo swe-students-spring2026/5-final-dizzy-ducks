@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My applications{% endblock %}
+{% block content %}
+  <div class="row" style="margin-bottom: 12px;">
+    <h1 style="margin: 0;">My applications</h1>
+    <span class="muted">Jobs you've applied for</span>
+  </div>
+
+  <div class="grid">
+    {% if rows|length == 0 %}
+      <div class="card">
+        <p style="margin: 0;">You haven't applied to any gigs yet.</p>
+      </div>
+    {% endif %}
+
+    {% for row in rows %}
+      {% set app = row.application %}
+      {% set gig = row.gig %}
+      <div class="card">
+        <div class="row">
+          <div style="flex: 1;">
+            <div style="font-size: 18px; font-weight: 700;">
+              {% if gig %}
+                {{ gig.title }}
+              {% else %}
+                <span class="muted">(Gig removed)</span>
+              {% endif %}
+            </div>
+            <div class="muted" style="margin-top: 4px;">
+              {% if gig %}
+                <span class="pill">{{ gig.category or "uncategorized" }}</span>
+                <span class="pill">gig: {{ gig.status or "open" }}</span>
+              {% endif %}
+              <span class="pill
+                {%- if app.status == "accepted" %} pill-accepted
+                {%- elif app.status == "rejected" %} pill-rejected
+                {%- endif %}">
+                application: {{ app.status or "pending" }}
+              </span>
+            </div>
+            {% if app.message %}
+              <div class="muted" style="margin-top: 8px; font-size: 13px;">
+                "{{ app.message | truncate(120) }}"
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            {% if gig %}
+              <a class="btn" href="/gigs/{{ gig._id }}">View gig</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

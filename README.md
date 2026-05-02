@@ -160,6 +160,24 @@ Why SendGrid fits this project:
 | `DIGEST_DAY` | Weekly digest day, expected value: `monday` |
 | `DIGEST_HOUR` | Hour when weekly digest emails should be queued |
 
+## Local Web App Development
+
+The Python environment is managed with Pipenv. Use Python 3.10.
+
+```bash
+pipenv install --dev
+pipenv run dev
+```
+
+The web app runs at `http://127.0.0.1:5000`. If `MONGODB_URI` is not set, the app uses an in-memory repository for local development.
+
+Run quality checks before committing web app changes:
+
+```bash
+pipenv run lint
+pipenv run test
+```
+
 ## Recommended Repo Structure
 
 ```text

@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+dizzy-ducks = {editable = true, path = "."}
+
+[dev-packages]
+black = ">=24.0"
+djlint = ">=1.36"
+mongomock = ">=4.1"
+pytest = ">=7.0"
+pytest-cov = ">=5.0"
+ruff = ">=0.6"
+
+[requires]
+python_version = "3.10"
+
+[scripts]
+dev = "flask --app web:create_app run --host 127.0.0.1 --port 5000"
+format = "sh -c 'black web tests && djlint web/templates --reformat && npx --yes prettier@3.5.3 --write web/static/css/main.css'"
+lint = "sh -c 'black --check web tests && ruff check web tests && djlint web/templates --check && npx --yes prettier@3.5.3 --check web/static/css/main.css'"
+test = "pytest"

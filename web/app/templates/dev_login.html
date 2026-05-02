@@ -1,24 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Dev login{% endblock %}
 {% block content %}
-  <div class="row" style="margin-bottom: 12px;">
-    <h1 style="margin: 0;">Dev login</h1>
-    <span class="muted">Temporary helper until real auth is merged</span>
-  </div>
 
-  <div class="card">
-    <form method="post" class="grid">
-      <div>
-        <label for="email">Email</label>
-        <input id="email" name="email" type="text" placeholder="you@school.edu" />
-      </div>
-      <div>
-        <label for="name">Name (optional)</label>
-        <input id="name" name="name" type="text" placeholder="Your Name" />
-      </div>
-      <div class="row">
-        <button class="btn" type="submit">Log in</button>
+  <section class="panel narrow">
+    <h1 style="margin-top:0;">Dev login</h1>
+    <p class="hint">Temporary helper until real auth is wired up.</p>
+    <form method="post">
+      <label>
+        Email
+        <input name="email" type="email" placeholder="you@school.edu" required />
+      </label>
+      <label>
+        Name <span class="hint">(optional)</span>
+        <input name="name" type="text" placeholder="Your Name" />
+      </label>
+      <div class="actions">
+        <button type="submit">Log in</button>
       </div>
     </form>
-  </div>
+  </section>
+
 {% endblock %}

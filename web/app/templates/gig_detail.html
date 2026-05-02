@@ -1,86 +1,69 @@
 {% extends "base.html" %}
 {% block title %}{{ gig.title }}{% endblock %}
 {% block content %}
-  <div class="row" style="margin-bottom: 12px;">
-    <div>
-      <h1 style="margin: 0;">{{ gig.title }}</h1>
-      <div class="muted" style="margin-top: 4px;">
-        <span class="pill">{{ gig.category or "uncategorized" }}</span>
-        <span class="pill">{{ gig.status or "open" }}</span>
-        {% if gig.pay_rate %}
-          <span class="pill">{{ gig.pay_rate }}</span>
-        {% endif %}
-      </div>
+
+  <section class="panel panel-row">
+    <div class="stack">
+      <h1 style="margin:0;">{{ gig.title }}</h1>
+      <p class="meta" style="margin:0;">
+        {{ gig.category or "uncategorized" }}
+        {% if gig.pay %}&middot; <span class="pay">{{ gig.pay }}</span>{% endif %}
+        &middot; <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
+      </p>
     </div>
-    <div>
-      <a class="btn" href="javascript:history.back()">Back</a>
-    </div>
-  </div>
+    <a class="secondary-button" href="javascript:history.back()">Back</a>
+  </section>
 
-  <div class="grid">
-    <div class="card">
-      <div class="muted" style="margin-bottom: 8px; font-size: 12px;">Description</div>
-      <div style="white-space: pre-wrap; line-height: 1.6;">{{ gig.description or "No description provided." }}</div>
-    </div>
+  <section class="panel">
+    <h2 style="margin-top:0;">Description</h2>
+    <p style="white-space: pre-wrap; margin:0;">{{ gig.description or "No description provided." }}</p>
+  </section>
 
-    {% if poster %}
-      <div class="card">
-        <div class="muted" style="margin-bottom: 6px; font-size: 12px;">Posted by</div>
-        <div style="font-weight: 600;">{{ poster.name or "Unknown" }}</div>
-        <div class="muted">{{ poster.email or "" }}</div>
-        {% if poster.tags %}
-          <div style="margin-top: 8px;">
-            {% for tag in poster.tags %}
-              <span class="pill">{{ tag }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
+  {% if poster %}
+    <section class="panel">
+      <p class="hint" style="margin-top:0;">Posted by</p>
+      <div class="stack">
+        <strong>{{ poster.name or "Unknown" }}</strong>
+        <span class="meta">{{ poster.email or "" }}</span>
       </div>
-    {% endif %}
+    </section>
+  {% endif %}
 
-    {% if is_poster %}
-      <div class="card">
-        <p style="margin: 0;">This is your gig. <a href="/my/gigs/{{ gig._id }}">View applicants →</a></p>
-      </div>
+  {% if is_poster %}
+    <section class="panel">
+      <p style="margin:0;">This is your gig. <a href="{{ url_for('management.gig_applicants', gig_id=gig._id) }}">View applicants →</a></p>
+    </section>
 
-    {% elif gig.status != "open" %}
-      <div class="card">
-        <p style="margin: 0; color: #a8b3cf;">This gig is no longer accepting applications.</p>
-      </div>
+  {% elif gig.status != "open" %}
+    <section class="panel">
+      <p class="meta" style="margin:0;">This gig is no longer accepting applications.</p>
+    </section>
 
-    {% elif existing_application %}
-      <div class="card">
-        <div class="muted" style="margin-bottom: 6px; font-size: 12px;">Your application</div>
-        <div>
-          Status: <span class="pill">{{ existing_application.status or "pending" }}</span>
-        </div>
+  {% elif existing_application %}
+    <section class="panel">
+      <p class="hint" style="margin-top:0;">Your application</p>
+      <div class="stack">
+        <div>Status: <span class="badge badge-{{ existing_application.status or 'pending' }}">{{ existing_application.status or "pending" }}</span></div>
         {% if existing_application.message %}
-          <div style="margin-top: 10px;">
-            <div class="muted" style="margin-bottom: 4px; font-size: 12px;">Your message</div>
-            <div style="white-space: pre-wrap;">{{ existing_application.message }}</div>
-          </div>
+          <p class="hint" style="margin:0;">Your message</p>
+          <p style="white-space: pre-wrap; margin:0;">{{ existing_application.message }}</p>
         {% endif %}
       </div>
+    </section>
 
-    {% else %}
-      <div class="card">
-        <div class="muted" style="margin-bottom: 12px; font-size: 12px;">Apply for this gig</div>
-        <form method="post" action="/gigs/{{ gig._id }}/apply" class="grid">
-          <div>
-            <label for="message">Message to poster <span class="muted">(optional)</span></label>
-            <textarea
-              id="message"
-              name="message"
-              rows="4"
-              placeholder="Tell them why you're a good fit…"
-              style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a365c; background: #0b1226; color: #e8eefc; resize: vertical; box-sizing: border-box;"
-            ></textarea>
-          </div>
-          <div>
-            <button class="btn" type="submit">Submit application</button>
-          </div>
-        </form>
-      </div>
-    {% endif %}
-  </div>
+  {% else %}
+    <section class="panel">
+      <h2 style="margin-top:0;">Apply</h2>
+      <form method="post" action="{{ url_for('gigs.apply', gig_id=gig._id) }}">
+        <label>
+          Message to poster <span class="hint">(optional)</span>
+          <textarea name="message" rows="4" placeholder="Tell them why you're a good fit…"></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Submit application</button>
+        </div>
+      </form>
+    </section>
+  {% endif %}
+
 {% endblock %}

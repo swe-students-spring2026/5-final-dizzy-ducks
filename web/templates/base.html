@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+      {% block title %}Gig Marketplace{% endblock %}
+    </title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/main.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="{{ url_for('dashboard.index') }}">Gigs</a>
+      <nav>
+        {% if g.user %}
+          <a href="{{ url_for('management.my_gigs') }}">My posted gigs</a>
+          <a href="{{ url_for('gigs.my_applied') }}">My applications</a>
+          <a href="{{ url_for('onboarding.choose_tags') }}">Tags</a>
+          <form class="inline-form"
+                action="{{ url_for('auth.logout') }}"
+                method="post">
+            <button type="submit">Log out</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Log in</a>
+          <a href="{{ url_for('auth.signup') }}">Sign up</a>
+        {% endif %}
+      </nav>
+    </header>
+    <main class="page">
+      {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

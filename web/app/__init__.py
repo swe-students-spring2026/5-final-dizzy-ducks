@@ -14,6 +14,7 @@ from web.sample_data import seed_sample_gigs
 from web.tags import TAG_LABELS
 
 from .blueprints.dev_auth import bp as dev_auth_bp
+from .blueprints.gigs import bp as gigs_bp
 from .blueprints.management import bp as management_bp
 from .blueprints.profile import bp as profile_bp
 from .db import close_mongo, init_mongo
@@ -54,6 +55,7 @@ def create_app(test_config: dict | None = None, repository=None) -> Flask:
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dev_auth_bp, name="dev_auth")
+    app.register_blueprint(gigs_bp)
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(management_bp)

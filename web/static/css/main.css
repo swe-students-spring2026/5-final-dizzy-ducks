@@ -195,3 +195,46 @@ form {
     flex-direction: column;
   }
 }
+
+textarea {
+  font: inherit;
+  width: 100%;
+  border: 1px solid #b9c3c6;
+  border-radius: 4px;
+  padding: 0.55rem;
+  resize: vertical;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #eef1f2;
+  color: #5b6a70;
+}
+
+.badge-pending  { background: #fef9e7; color: #7d5a00; }
+.badge-accepted { background: #eaf6ec; color: #1a6b2a; }
+.badge-rejected { background: #fff0f0; color: #7d1d1d; }
+.badge-open     { background: #eaf3ff; color: #1a3f7d; }
+.badge-filled   { background: #eef1f2; color: #5b6a70; }
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stack {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: #5b6a70;
+}

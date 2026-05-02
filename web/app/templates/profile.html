@@ -1,29 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Profile{% endblock %}
 {% block content %}
-  <div class="row" style="margin-bottom: 12px;">
-    <h1 style="margin: 0;">Your profile</h1>
-    <span class="muted">Update your tags for job matching</span>
-  </div>
 
-  <div class="card">
-    <form method="post" class="grid">
-      <div>
-        <label for="name">Name</label>
-        <input id="name" name="name" type="text" value="{{ user.name or '' }}" />
-      </div>
-      <div>
-        <label>Email</label>
-        <div class="muted">{{ user.email or "unknown" }}</div>
-      </div>
-      <div>
-        <label for="tags">Tags (comma-separated)</label>
-        <input id="tags" name="tags" type="text" value="{{ tags|join(', ') }}" />
-        <div class="muted" style="margin-top: 6px;">Examples: tutoring, moving, dog-walking, orgo</div>
-      </div>
-      <div class="row">
-        <button class="btn" type="submit">Save</button>
+  <section class="panel narrow">
+    <h1 style="margin-top:0;">Your profile</h1>
+    <form method="post">
+      <label>
+        Name
+        <input name="name" type="text" value="{{ user.name or '' }}" />
+      </label>
+      <label>
+        Email
+        <input type="text" value="{{ user.email or 'unknown' }}" disabled />
+      </label>
+      <label>
+        Tags <span class="hint">(comma-separated, e.g. tutoring, moving)</span>
+        <input name="tags" type="text" value="{{ user.get('tags', []) | join(', ') }}" />
+      </label>
+      <div class="actions">
+        <button type="submit">Save</button>
       </div>
     </form>
-  </div>
+  </section>
+
 {% endblock %}

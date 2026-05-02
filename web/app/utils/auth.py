@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Callable, TypeVar
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from flask import abort, current_app, g, redirect, session, url_for
 
 from ..db import get_db
@@ -23,7 +24,7 @@ def load_current_user() -> None:
         return
     try:
         oid = ObjectId(str(user_id))
-    except (TypeError, ValueError):
+    except (InvalidId, TypeError, ValueError):
         return
     user = get_db().users.find_one({"_id": oid})
     if user:

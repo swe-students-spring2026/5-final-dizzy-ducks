@@ -65,7 +65,7 @@ def format_notification(n):
     if notification_type in templates:
         subject, body = templates[notification_type]
         return subject, body
-    
+
     # fallback to whatever subject/body is already in the document
     return n.get("subject", "GigBoard Notification"), n.get("body", "You have a new notification.")
 

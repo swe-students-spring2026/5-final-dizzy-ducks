@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from ..db import get_db
 from ..utils.auth import login_required, require_poster
@@ -22,9 +32,10 @@ def _oid(value: str) -> ObjectId:
 @login_required
 def my_gigs():
     db = get_db()
-    gigs = list(
-        db.gigs.find({"poster_id": g.user["_id"]}).sort("created_at", -1)
-    )
+    if "_id" in g.user:
+        gigs = list(db.gigs.find({"poster_id": g.user["_id"]}).sort("created_at", -1))
+    else:
+        gigs = current_app.repository.list_gigs_by_poster(g.user["id"])
     return render_template("my_gigs.html", gigs=gigs)
 
 
@@ -85,7 +96,9 @@ def decide_application(gig_id: str, application_id: str):
     if action not in {"accept", "reject"}:
         abort(400)
 
-    application = db.applications.find_one({"_id": _oid(application_id), "gig_id": gig["_id"]})
+    application = db.applications.find_one(
+        {"_id": _oid(application_id), "gig_id": gig["_id"]}
+    )
     if not application:
         abort(404)
 

@@ -57,6 +57,43 @@ def test_in_memory_repository_filters_open_gigs_by_tags_and_search(repository):
     assert [gig["title"] for gig in searched_gigs] == ["Algebra review"]
 
 
+def test_in_memory_repository_updates_profile_and_lists_poster_gigs(repository):
+    user = repository.create_user(
+        name="Casey Helper",
+        email="casey@example.com",
+        password_hash="hashed-password",
+    )
+    repository.create_gig(
+        title="Mine",
+        category="delivery",
+        pay="$30",
+        location="Campus",
+        date="2026-05-07",
+        description="A posted gig.",
+        poster_id=user["id"],
+    )
+    repository.create_gig(
+        title="Someone else's",
+        category="tutoring",
+        pay="$30",
+        location="Library",
+        date="2026-05-07",
+        description="Another posted gig.",
+        poster_id="other-user",
+    )
+
+    updated = repository.update_user_profile(
+        user["id"], name="Casey Poster", tags=["delivery", "bad-tag"]
+    )
+
+    assert updated["name"] == "Casey Poster"
+    assert updated["tags"] == ["delivery"]
+    assert updated["notification_preferences"]["tags"] == ["delivery"]
+    assert [gig["title"] for gig in repository.list_gigs_by_poster(user["id"])] == [
+        "Mine"
+    ]
+
+
 def test_mongo_repository_handles_users_and_tags():
     repository = MongoRepository(client=mongomock.MongoClient(), db_name="test")
 
@@ -132,3 +169,32 @@ def test_mongo_repository_filters_open_gigs_by_tags_and_search():
 
     searched_gigs = repository.list_open_gigs(search="evening")
     assert [gig["title"] for gig in searched_gigs] == ["Dog walk"]
+
+
+def test_mongo_repository_updates_profile_and_lists_poster_gigs():
+    repository = MongoRepository(client=mongomock.MongoClient(), db_name="test")
+    user = repository.create_user(
+        name="Taylor Poster",
+        email="poster@example.com",
+        password_hash="hashed-password",
+    )
+    repository.create_gig(
+        title="Posted by Taylor",
+        category="delivery",
+        pay="$45",
+        location="Campus",
+        date="2026-05-08",
+        description="Carry boxes.",
+        poster_id=user["id"],
+    )
+
+    updated = repository.update_user_profile(
+        user["id"], name="Taylor Updated", tags=["delivery", "unknown"]
+    )
+
+    assert updated["name"] == "Taylor Updated"
+    assert updated["tags"] == ["delivery"]
+    assert updated["notification_preferences"]["tags"] == ["delivery"]
+    assert [gig["title"] for gig in repository.list_gigs_by_poster(user["id"])] == [
+        "Posted by Taylor"
+    ]

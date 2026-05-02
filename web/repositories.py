@@ -47,6 +47,7 @@ def _serialize_user(document: dict[str, Any] | None) -> dict[str, Any] | None:
     serialized.setdefault("skills", [])
     serialized.setdefault("notification_preferences", _default_preferences())
     serialized["notification_preferences"].setdefault("tags", [])
+    serialized.setdefault("tags", serialized["notification_preferences"]["tags"])
     return serialized
 
 
@@ -101,6 +102,21 @@ class InMemoryRepository:
             return None
 
         user["notification_preferences"]["tags"] = normalize_tags(tags)
+        user["tags"] = user["notification_preferences"]["tags"]
+        return _serialize_user(user)
+
+    def update_user_profile(
+        self, user_id: str, *, name: str | None = None, tags: list[str] | None = None
+    ) -> dict[str, Any] | None:
+        user = self.users.get(str(user_id))
+        if user is None:
+            return None
+
+        if name:
+            user["name"] = name.strip()
+        if tags is not None:
+            user["notification_preferences"]["tags"] = normalize_tags(tags)
+            user["tags"] = user["notification_preferences"]["tags"]
         return _serialize_user(user)
 
     def create_gig(
@@ -148,6 +164,14 @@ class InMemoryRepository:
                 continue
             matches.append(_serialize_gig(gig))
 
+        return sorted(matches, key=lambda gig: gig["created_at"], reverse=True)
+
+    def list_gigs_by_poster(self, poster_id: str) -> list[dict[str, Any]]:
+        matches = [
+            _serialize_gig(gig)
+            for gig in self.gigs.values()
+            if str(gig.get("poster_id")) == str(poster_id)
+        ]
         return sorted(matches, key=lambda gig: gig["created_at"], reverse=True)
 
 
@@ -208,6 +232,31 @@ class MongoRepository:
         )
         return _serialize_user(result)
 
+    def update_user_profile(
+        self, user_id: str, *, name: str | None = None, tags: list[str] | None = None
+    ) -> dict[str, Any] | None:
+        try:
+            object_id = ObjectId(user_id)
+        except (InvalidId, TypeError):
+            return None
+
+        updates: dict[str, Any] = {}
+        if name:
+            updates["name"] = name.strip()
+        if tags is not None:
+            normalized_tags = normalize_tags(tags)
+            updates["tags"] = normalized_tags
+            updates["notification_preferences.tags"] = normalized_tags
+        if not updates:
+            return self.get_user_by_id(user_id)
+
+        result = self.users.find_one_and_update(
+            {"_id": object_id},
+            {"$set": updates},
+            return_document=True,
+        )
+        return _serialize_user(result)
+
     def create_gig(
         self,
         *,
@@ -254,6 +303,18 @@ class MongoRepository:
             ]
 
         documents = self.gigs.find(query).sort("created_at", DESCENDING)
+        return [_serialize_gig(document) for document in documents]
+
+    def list_gigs_by_poster(self, poster_id: str) -> list[dict[str, Any]]:
+        poster_keys: list[Any] = [poster_id]
+        try:
+            poster_keys.append(ObjectId(poster_id))
+        except (InvalidId, TypeError):
+            pass
+
+        documents = self.gigs.find({"poster_id": {"$in": poster_keys}}).sort(
+            "created_at", DESCENDING
+        )
         return [_serialize_gig(document) for document in documents]
 
 

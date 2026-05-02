@@ -18,7 +18,7 @@
       </div>
       <div>
         <label for="tags">Tags (comma-separated)</label>
-        <input id="tags" name="tags" type="text" value="{{ (user.tags or [])|join(', ') }}" />
+        <input id="tags" name="tags" type="text" value="{{ tags|join(', ') }}" />
         <div class="muted" style="margin-top: 6px;">Examples: tutoring, moving, dog-walking, orgo</div>
       </div>
       <div class="row">

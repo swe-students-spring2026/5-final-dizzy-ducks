@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from ..db import get_db
 from ..utils.auth import login_required
@@ -25,7 +34,7 @@ def _parse_tags(raw: str) -> list[str]:
 @bp.get("/me")
 @login_required
 def me():
-    return render_template("profile.html", user=g.user)
+    return render_template("profile.html", user=g.user, tags=_user_tags(g.user))
 
 
 @bp.post("/me")
@@ -35,10 +44,23 @@ def update_me():
     name = (request.form.get("name") or "").strip()
     tags = _parse_tags(request.form.get("tags") or "")
 
-    updates: dict = {"tags": tags}
+    updates: dict = {
+        "tags": tags,
+        "notification_preferences.tags": tags,
+    }
     if name:
         updates["name"] = name
 
-    db.users.update_one({"_id": g.user["_id"]}, {"$set": updates})
+    if "_id" in g.user:
+        db.users.update_one({"_id": g.user["_id"]}, {"$set": updates})
+    else:
+        current_app.repository.update_user_profile(g.user["id"], name=name, tags=tags)
+
     flash("Profile updated.", "success")
     return redirect(url_for("profile.me"))
+
+
+def _user_tags(user: dict) -> list[str]:
+    if user.get("tags"):
+        return user["tags"]
+    return user.get("notification_preferences", {}).get("tags", [])

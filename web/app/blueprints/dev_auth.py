@@ -29,7 +29,7 @@ def dev_login_submit():
     name = (request.form.get("name") or "").strip()
     if not email:
         flash("Email is required.", "error")
-        return redirect(url_for("auth.dev_login_form"))
+        return redirect(url_for(".dev_login_form"))
 
     db = get_db()
     user = db.users.find_one({"email": email})
@@ -51,4 +51,4 @@ def logout():
         return {"error": "ENABLE_DEV_AUTH is not enabled"}, 404
     session.pop("user_id", None)
     flash("Logged out.", "info")
-    return redirect(url_for("auth.dev_login_form"))
+    return redirect(url_for(".dev_login_form"))

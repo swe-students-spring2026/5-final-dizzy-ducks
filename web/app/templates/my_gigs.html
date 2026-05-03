@@ -1,33 +1,35 @@
 {% extends "base.html" %}
-{% block title %}My posted jobs{% endblock %}
+{% block title %}My posted gigs{% endblock %}
 {% block content %}
-  <div class="row" style="margin-bottom: 12px;">
-    <h1 style="margin: 0;">My posted jobs</h1>
-    <span class="muted">Jobs you posted</span>
-  </div>
-
-  <div class="grid">
-    {% if gigs|length == 0 %}
-      <div class="card">
-        <p style="margin: 0;">You haven’t posted any gigs yet.</p>
-      </div>
-    {% endif %}
-
-    {% for gig in gigs %}
-      <div class="card">
-        <div class="row">
-          <div>
-            <div style="font-size: 18px; font-weight: 700;">{{ gig.title }}</div>
-            <div class="muted">
-              <span class="pill">{{ gig.category or "uncategorized" }}</span>
-              <span class="pill">status: {{ gig.status or "open" }}</span>
+  <section class="panel dashboard-header">
+    <div>
+      <h1 style="margin:0;">My posted gigs</h1>
+      <p style="margin:0;" class="meta">{{ gigs|length }} {{ "gig" if gigs|length == 1 else "gigs" }} posted</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('management.new_gig') }}">Post a gig</a>
+  </section>
+  {% if gigs %}
+    <div class="gig-list">
+      {% for gig in gigs %}
+        <article class="gig-card">
+          <div class="panel-row">
+            <div class="stack">
+              <h2 style="margin:0;">{{ gig.title }}</h2>
+              <p class="meta" style="margin:0;">
+                {{ gig.category or "uncategorized" }} &middot;
+                <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
+              </p>
             </div>
+            <a class="secondary-button" href="/my/gigs/{{ gig._id or gig.id }}">View applicants</a>
           </div>
-          <div>
-            <a class="btn" href="/my/gigs/{{ gig._id }}">View applicants</a>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="panel empty-state">
+      <h2>No gigs posted yet.</h2>
+      <p>Post a gig to start receiving applications.</p>
+      <a class="secondary-button" href="{{ url_for('management.new_gig') }}">Post a gig</a>
+    </section>
+  {% endif %}
 {% endblock %}

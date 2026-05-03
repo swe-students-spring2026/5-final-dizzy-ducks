@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}My applications{% endblock %}
+{% block content %}
+  <section class="panel dashboard-header">
+    <div>
+      <h1 style="margin:0;">My applications</h1>
+      <p style="margin:0;" class="meta">{{ rows|length }} {{ "application" if rows|length == 1 else "applications" }}</p>
+    </div>
+  </section>
+  {% if rows %}
+    <div class="gig-list">
+      {% for row in rows %}
+        {% set app = row.application %}
+        {% set gig = row.gig %}
+        <article class="gig-card">
+          <div class="panel-row" style="align-items:flex-start;">
+            <div class="stack">
+              <h2 style="margin:0;">
+                {% if gig %}
+                  {{ gig.title }}
+                {% else %}
+                  <span class="meta">Gig removed</span>
+                {% endif %}
+              </h2>
+              <p class="meta" style="margin:0;">
+                {% if gig %}{{ gig.category or "uncategorized" }} &middot;{% endif %}
+                Application: <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
+              </p>
+              {% if app.message %}<p class="hint" style="margin:0;">"{{ app.message | truncate(120) }}"</p>{% endif %}
+            </div>
+            {% if gig %}
+              <a class="secondary-button"
+                 href="{{ url_for('gigs.gig_detail', gig_id=gig._id or gig.id) }}">View gig</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="panel empty-state">
+      <h2>No applications yet.</h2>
+      <p>Browse open gigs and apply to get started.</p>
+    </section>
+  {% endif %}
+{% endblock %}

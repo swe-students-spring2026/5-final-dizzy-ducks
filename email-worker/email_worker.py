@@ -77,17 +77,17 @@ def format_notification(n):
         return subject, body
 
     # fallback templates by type
-    gig_title = n.get("gig_title", "a gig")
+    gig_title = n.get("payload", {}).get("gig_title", "a gig")
     templates = {
         "new_gig": (
             "New Gig Matches Your Preferences",
             f"Hi,\n\nA new gig was posted that matches your preferences: '{gig_title}'.\n\nLog in to GigBoard to apply.\n\nThe GigBoard Team"
         ),
-        "application": (
+        "new_application": (
             "Someone Applied to Your Gig",
             f"Hi,\n\nSomeone applied to your gig '{gig_title}'.\n\nLog in to GigBoard to review their application.\n\nThe GigBoard Team"
         ),
-        "status": (
+        "status_change": (
             "Application Update",
             f"Hi,\n\nThere's been an update on your application for '{gig_title}'.\n\nLog in to GigBoard for details.\n\nThe GigBoard Team"
         ),
@@ -111,9 +111,9 @@ def run(db):
             notifications = get_pending_notifications(db)
             print(f"found {len(notifications)} pending notifications")
             for n in notifications:
-                to_email = get_user_email(db, n["user_id"])
+                to_email = get_user_email(db, n["to_user_id"])
                 if not to_email:
-                    print(f"no email found for user_id {n['user_id']}, skipping")
+                    print(f"no email found for to_user_id {n['to_user_id']}, skipping")
                     mark_as_failed(db, n["_id"])
                     continue
 

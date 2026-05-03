@@ -19,19 +19,19 @@ def test_format_notification_uses_subject_and_body_from_document():
     assert body == "Custom body"
 
 def test_format_notification_new_gig_fallback():
-    n = {"type": "new_gig", "gig_title": "Dog Walking"}
+    n = {"type": "new_gig", "payload": {"gig_title": "Dog Walking"}}
     subject, body = email_worker.format_notification(n)
     assert subject == "New Gig Matches Your Preferences"
     assert "Dog Walking" in body
 
-def test_format_notification_application_fallback():
-    n = {"type": "application", "gig_title": "Tutoring"}
+def test_format_notification_new_application_fallback():
+    n = {"type": "new_application", "payload": {"gig_title": "Tutoring"}}
     subject, body = email_worker.format_notification(n)
     assert subject == "Someone Applied to Your Gig"
     assert "Tutoring" in body
 
-def test_format_notification_status_fallback():
-    n = {"type": "status", "gig_title": "Moving Help"}
+def test_format_notification_status_change_fallback():
+    n = {"type": "status_change", "payload": {"gig_title": "Moving Help"}}
     subject, body = email_worker.format_notification(n)
     assert subject == "Application Update"
     assert "Moving Help" in body
@@ -43,7 +43,7 @@ def test_format_notification_weekly_digest_fallback():
     assert "weekly" in body.lower()
 
 def test_format_notification_missing_gig_title_uses_default():
-    n = {"type": "application"}
+    n = {"type": "new_application"}
     _, body = email_worker.format_notification(n)
     assert "a gig" in body
 
@@ -118,8 +118,8 @@ def test_get_pending_notifications_queries_pending_status():
 def test_get_pending_notifications_returns_results():
     mock_db = MagicMock()
     mock_db.notifications.find.return_value = [
-        {"_id": ObjectId(), "user_id": ObjectId(), "status": "pending"},
-        {"_id": ObjectId(), "user_id": ObjectId(), "status": "pending"},
+        {"_id": ObjectId(), "to_user_id": ObjectId(), "status": "pending"},
+        {"_id": ObjectId(), "to_user_id": ObjectId(), "status": "pending"},
     ]
 
     result = email_worker.get_pending_notifications(mock_db)
@@ -210,7 +210,7 @@ def test_mark_as_failed_sets_status_failed():
 def test_run_sends_and_marks_sent(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     notification_id = ObjectId()
     mock_get.side_effect = [
-        [{"_id": notification_id, "user_id": ObjectId(), "type": "application", "subject": "S", "body": "B"}],
+        [{"_id": notification_id, "to_user_id": ObjectId(), "type": "application", "subject": "S", "body": "B"}],
         Exception("stop loop"),
     ]
 
@@ -229,7 +229,7 @@ def test_run_sends_and_marks_sent(mock_get, mock_get_email, mock_fail, mock_mark
 @patch("email_worker.get_pending_notifications")
 def test_run_marks_failed_when_send_fails(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     mock_get.side_effect = [
-        [{"_id": ObjectId(), "user_id": ObjectId(), "type": "status", "subject": "S", "body": "B"}],
+        [{"_id": ObjectId(), "to_user_id": ObjectId(), "type": "status", "subject": "S", "body": "B"}],
         Exception("stop loop"),
     ]
 
@@ -245,7 +245,7 @@ def test_run_marks_failed_when_send_fails(mock_get, mock_get_email, mock_fail, m
 @patch("email_worker.get_pending_notifications")
 def test_run_marks_failed_when_user_email_not_found(mock_get, mock_get_email, mock_fail, mock_sleep):
     mock_get.side_effect = [
-        [{"_id": ObjectId(), "user_id": ObjectId(), "type": "new_gig", "subject": "S", "body": "B"}],
+        [{"_id": ObjectId(), "to_user_id": ObjectId(), "type": "new_gig", "subject": "S", "body": "B"}],
         Exception("stop loop"),
     ]
 
@@ -276,8 +276,8 @@ def test_run_continues_after_poll_exception(mock_get, mock_sleep):
 def test_run_processes_multiple_notifications(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     mock_get.side_effect = [
         [
-            {"_id": ObjectId(), "user_id": ObjectId(), "type": "application", "subject": "S1", "body": "B1"},
-            {"_id": ObjectId(), "user_id": ObjectId(), "type": "new_gig", "subject": "S2", "body": "B2"},
+            {"_id": ObjectId(), "to_user_id": ObjectId(), "type": "application", "subject": "S1", "body": "B1"},
+            {"_id": ObjectId(), "to_user_id": ObjectId(), "type": "new_gig", "subject": "S2", "body": "B2"},
         ],
         Exception("stop loop"),
     ]

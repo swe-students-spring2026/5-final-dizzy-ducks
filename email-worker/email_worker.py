@@ -13,21 +13,48 @@ SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@gigboard.com")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", 60))
 
+
 def get_db(uri=MONGO_URI):
     client = MongoClient(uri)
     return client["gigboard"]
 
-def get_pending_notifications(db):
-    return list(db.notifications.find({"sent": False}))
 
-def mark_as_sent(db, notification_id):
+def get_pending_notifications(db):
+    now = datetime.now(timezone.utc)
+    return list(db.notifications.find({
+        "status": "pending",
+        "$or": [
+            {"scheduled_for": None},
+            {"scheduled_for": {"$exists": False}},
+            {"scheduled_for": {"$lte": now}},
+        ]
+    }))
+
+
+def get_user_email(db, user_id):
+    user = db.users.find_one({"_id": user_id}, {"email": 1})
+    if user:
+        return user.get("email")
+    return None
+
+
+def mark_as_sent(db, notification_id, provider_message_id=None):
     db.notifications.update_one(
         {"_id": notification_id},
         {"$set": {
-            "sent": True,
-            "sent_at": datetime.now(timezone.utc)
+            "status": "sent",
+            "sent_at": datetime.now(timezone.utc),
+            "provider_message_id": provider_message_id,
         }}
     )
+
+
+def mark_as_failed(db, notification_id):
+    db.notifications.update_one(
+        {"_id": notification_id},
+        {"$set": {"status": "failed"}}
+    )
+
 
 def send_email(to, subject, body, api_key=SENDGRID_API_KEY):
     sg = sendgrid.SendGridAPIClient(api_key=api_key)
@@ -38,38 +65,45 @@ def send_email(to, subject, body, api_key=SENDGRID_API_KEY):
         plain_text_content=body
     )
     response = sg.send(message)
-    return response.status_code
+    message_id = response.headers.get("X-Message-Id")
+    return response.status_code, message_id
 
-# --- notification formatter ---
+
 def format_notification(n):
+    # use subject/body if the Flask app already set them
+    subject = n.get("subject")
+    body = n.get("body")
+    if subject and body:
+        return subject, body
+
+    # fallback templates by type
+    gig_title = n.get("payload", {}).get("gig_title", "a gig")
     templates = {
-        "application_received": (
-            "Someone Applied to Your Gig",
-            f"Hi,\n\nSomeone applied to your gig '{n.get('gig_title', 'your gig')}'.\n\nLog in to GigBoard to review their application.\n\nThe GigBoard Team"
-        ),
-        "application_accepted": (
-            "You Got the Gig!",
-            f"Hi,\n\nCongratulations! Your application for '{n.get('gig_title', 'a gig')}' was accepted.\n\nLog in to GigBoard for next steps.\n\nThe GigBoard Team"
-        ),
-        "application_rejected": (
-            "Application Update",
-            f"Hi,\n\nUnfortunately your application for '{n.get('gig_title', 'a gig')}' was not accepted this time.\n\nKeep browsing GigBoard for more opportunities.\n\nThe GigBoard Team"
-        ),
-        "new_gig_match": (
+        "new_gig": (
             "New Gig Matches Your Preferences",
-            f"Hi,\n\nA new gig was posted that matches your preferences: '{n.get('gig_title', 'a gig')}'.\n\nLog in to GigBoard to apply.\n\nThe GigBoard Team"
+            f"Hi,\n\nA new gig was posted that matches your preferences: '{gig_title}'.\n\nLog in to GigBoard to apply.\n\nThe GigBoard Team"
+        ),
+        "new_application": (
+            "Someone Applied to Your Gig",
+            f"Hi,\n\nSomeone applied to your gig '{gig_title}'.\n\nLog in to GigBoard to review their application.\n\nThe GigBoard Team"
+        ),
+        "status_change": (
+            "Application Update",
+            f"Hi,\n\nThere's been an update on your application for '{gig_title}'.\n\nLog in to GigBoard for details.\n\nThe GigBoard Team"
+        ),
+        "weekly_digest": (
+            "Your Weekly GigBoard Digest",
+            "Hi,\n\nHere's your weekly summary of new gigs on GigBoard.\n\nLog in to browse and apply.\n\nThe GigBoard Team"
         ),
     }
 
     notification_type = n.get("type")
     if notification_type in templates:
-        subject, body = templates[notification_type]
-        return subject, body
+        return templates[notification_type]
 
-    # fallback to whatever subject/body is already in the document
-    return n.get("subject", "GigBoard Notification"), n.get("body", "You have a new notification.")
+    return "GigBoard Notification", "You have a new notification."
 
-# --- main loop ---
+
 def run(db):
     print(f"notification worker started, polling every {POLL_INTERVAL} seconds")
     while True:
@@ -77,16 +111,24 @@ def run(db):
             notifications = get_pending_notifications(db)
             print(f"found {len(notifications)} pending notifications")
             for n in notifications:
+                to_email = get_user_email(db, n["to_user_id"])
+                if not to_email:
+                    print(f"no email found for to_user_id {n['to_user_id']}, skipping")
+                    mark_as_failed(db, n["_id"])
+                    continue
+
                 subject, body = format_notification(n)
-                status = send_email(n["to_email"], subject, body)
-                if status == 202:
-                    mark_as_sent(db, n["_id"])
-                    print(f"sent '{n.get('type')}' email to {n['to_email']}")
+                status_code, message_id = send_email(to_email, subject, body)
+                if status_code == 202:
+                    mark_as_sent(db, n["_id"], provider_message_id=message_id)
+                    print(f"sent '{n.get('type')}' email to {to_email}")
                 else:
-                    print(f"failed to send to {n['to_email']}, status: {status}")
+                    mark_as_failed(db, n["_id"])
+                    print(f"failed to send to {to_email}, status: {status_code}")
         except Exception as e:
             print(f"error during poll: {e}")
         time.sleep(POLL_INTERVAL)
+
 
 if __name__ == "__main__":
     db = get_db()

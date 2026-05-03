@@ -46,12 +46,13 @@ def my_gigs():
 @login_required
 def new_gig():
     values = _gig_form_values()
+    questions = _parse_questions()
     errors: list[str] = []
 
     if request.method == "POST":
         errors = _validate_gig_form(values)
         if not errors:
-            _create_gig(values)
+            _create_gig(values, questions)
             flash("Gig posted.", "success")
             return redirect(url_for("management.my_gigs"))
 
@@ -60,6 +61,7 @@ def new_gig():
         errors=errors,
         job_tags=JOB_TAGS,
         values=values,
+        questions=questions,
     )
 
 
@@ -233,6 +235,17 @@ def _gig_form_values() -> dict[str, str]:
     }
 
 
+def _parse_questions() -> list[dict]:
+    count = int(request.form.get("question_count", "0") or "0")
+    questions = []
+    for i in range(count):
+        text = request.form.get(f"question_text_{i}", "").strip()
+        if text:
+            required = request.form.get(f"question_required_{i}") == "on"
+            questions.append({"text": text, "required": required})
+    return questions
+
+
 def _validate_gig_form(values: dict[str, str]) -> list[str]:
     errors = []
     required_labels = {
@@ -262,13 +275,14 @@ def _validate_gig_form(values: dict[str, str]) -> list[str]:
     return errors
 
 
-def _create_gig(values: dict[str, str]) -> None:
+def _create_gig(values: dict[str, str], questions: list[dict]) -> None:
     if "_id" in g.user:
         document = {
             **values,
             "poster_id": g.user["_id"],
             "status": "open",
             "created_at": datetime.now(timezone.utc),
+            "questions": questions,
         }
         get_db().gigs.insert_one(document)
         return

@@ -42,7 +42,7 @@ def dev_login_submit():
 
     session["user_id"] = str(user_id)
     flash("Logged in (dev).", "success")
-    return redirect("/my/gigs")
+    return redirect("/")
 
 
 @bp.post("/auth/logout")

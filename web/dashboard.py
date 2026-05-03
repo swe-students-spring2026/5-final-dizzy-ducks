@@ -10,7 +10,7 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @login_required
 def index():
     requested_tags = request.args.getlist("tag")
-    saved_tags = g.user["notification_preferences"].get("tags", [])
+    saved_tags = g.user.get("notification_preferences", {}).get("tags", [])
     selected_tags = normalize_tags(requested_tags) if requested_tags else saved_tags
     search = request.args.get("q", "").strip()
     gigs = current_app.repository.list_open_gigs(tags=selected_tags, search=search)

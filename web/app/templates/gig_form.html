@@ -29,10 +29,7 @@
       </label>
       <label>
         Pay
-        <input name="pay"
-               value="{{ values.pay }}"
-               placeholder="$40 or $25/hr"
-               required>
+        <input name="pay" value="{{ values.pay }}" placeholder="$40 or $25/hr" required>
       </label>
       <label>
         Location
@@ -46,10 +43,52 @@
         Description
         <textarea name="description" rows="5" required>{{ values.description }}</textarea>
       </label>
+
+      <fieldset style="border:none;padding:0;margin-top:1rem;">
+        <legend style="font-weight:600;margin-bottom:0.5rem;">Application questions <span class="hint">(optional)</span></legend>
+        <div id="questions-container">
+          {% for q in questions %}
+            <div class="question-row" id="question_row_{{ loop.index0 }}" style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">
+              <input type="text" name="question_text_{{ loop.index0 }}" value="{{ q.text }}" placeholder="Enter your question" style="flex:1;">
+              <label style="display:flex;align-items:center;gap:0.25rem;white-space:nowrap;">
+                <input type="checkbox" name="question_required_{{ loop.index0 }}" {% if q.required %}checked{% endif %}> Required
+              </label>
+              <button type="button" onclick="removeQuestion({{ loop.index0 }})">Remove</button>
+            </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="question_count" id="question_count" value="{{ questions|length }}">
+        <button type="button" onclick="addQuestion()" style="margin-top:0.5rem;">+ Add a question</button>
+      </fieldset>
+
       <div class="actions">
         <button type="submit">Post gig</button>
         <a href="{{ url_for('management.my_gigs') }}">Cancel</a>
       </div>
     </form>
   </section>
+  <script>
+    let nextIndex = {{ questions|length }};
+
+    function addQuestion() {
+      const container = document.getElementById('questions-container');
+      const i = nextIndex++;
+      document.getElementById('question_count').value = nextIndex;
+      const row = document.createElement('div');
+      row.className = 'question-row';
+      row.id = 'question_row_' + i;
+      row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+      row.innerHTML =
+        '<input type="text" name="question_text_' + i + '" placeholder="Enter your question" style="flex:1;">' +
+        '<label style="display:flex;align-items:center;gap:0.25rem;white-space:nowrap;">' +
+        '<input type="checkbox" name="question_required_' + i + '"> Required</label>' +
+        '<button type="button" onclick="removeQuestion(' + i + ')">Remove</button>';
+      container.appendChild(row);
+    }
+
+    function removeQuestion(i) {
+      const row = document.getElementById('question_row_' + i);
+      if (row) row.remove();
+    }
+  </script>
 {% endblock %}

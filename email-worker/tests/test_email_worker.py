@@ -89,7 +89,7 @@ def test_send_email_sends_to_correct_recipient(mock_sg_class):
     email_worker.send_email("recipient@nyu.edu", "Subject", "Body", api_key="fake-key")
 
     sent_message = mock_sg.send.call_args[0][0]
-    assert sent_message.to[0].email == "recipient@nyu.edu"
+    assert sent_message.personalizations[0].tos[0]["email"] == "recipient@nyu.edu"
 
 @patch("email_worker.sendgrid.SendGridAPIClient")
 def test_send_email_uses_correct_subject(mock_sg_class):
@@ -101,7 +101,7 @@ def test_send_email_uses_correct_subject(mock_sg_class):
     email_worker.send_email("student@nyu.edu", "My Subject", "Body", api_key="fake-key")
 
     sent_message = mock_sg.send.call_args[0][0]
-    assert sent_message.subject == "My Subject"
+    assert str(sent_message.subject) == "My Subject"
 
 
 # --- get_pending_notifications ---
@@ -210,11 +210,11 @@ def test_mark_as_failed_sets_status_failed():
 def test_run_sends_and_marks_sent(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     notification_id = ObjectId()
     mock_get.side_effect = [
-        [{"_id": notification_id, "to_user_id": ObjectId(), "type": "application", "subject": "S", "body": "B"}],
-        Exception("stop loop"),
+        [{"_id": notification_id, "to_user_id": ObjectId(), "type": "new_application", "subject": "S", "body": "B"}],
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     mock_send.assert_called_once()
@@ -229,11 +229,11 @@ def test_run_sends_and_marks_sent(mock_get, mock_get_email, mock_fail, mock_mark
 @patch("email_worker.get_pending_notifications")
 def test_run_marks_failed_when_send_fails(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     mock_get.side_effect = [
-        [{"_id": ObjectId(), "to_user_id": ObjectId(), "type": "status", "subject": "S", "body": "B"}],
-        Exception("stop loop"),
+        [{"_id": ObjectId(), "to_user_id": ObjectId(), "type": "status_change", "subject": "S", "body": "B"}],
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     mock_fail.assert_called_once()
@@ -246,10 +246,10 @@ def test_run_marks_failed_when_send_fails(mock_get, mock_get_email, mock_fail, m
 def test_run_marks_failed_when_user_email_not_found(mock_get, mock_get_email, mock_fail, mock_sleep):
     mock_get.side_effect = [
         [{"_id": ObjectId(), "to_user_id": ObjectId(), "type": "new_gig", "subject": "S", "body": "B"}],
-        Exception("stop loop"),
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     mock_fail.assert_called_once()
@@ -259,10 +259,10 @@ def test_run_marks_failed_when_user_email_not_found(mock_get, mock_get_email, mo
 def test_run_continues_after_poll_exception(mock_get, mock_sleep):
     mock_get.side_effect = [
         Exception("mongo blip"),
-        Exception("stop loop"),
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     assert mock_get.call_count == 2
@@ -276,13 +276,13 @@ def test_run_continues_after_poll_exception(mock_get, mock_sleep):
 def test_run_processes_multiple_notifications(mock_get, mock_get_email, mock_fail, mock_mark, mock_send, mock_sleep):
     mock_get.side_effect = [
         [
-            {"_id": ObjectId(), "to_user_id": ObjectId(), "type": "application", "subject": "S1", "body": "B1"},
+            {"_id": ObjectId(), "to_user_id": ObjectId(), "type": "new_application", "subject": "S1", "body": "B1"},
             {"_id": ObjectId(), "to_user_id": ObjectId(), "type": "new_gig", "subject": "S2", "body": "B2"},
         ],
-        Exception("stop loop"),
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     assert mock_send.call_count == 2
@@ -296,10 +296,10 @@ def test_run_processes_multiple_notifications(mock_get, mock_get_email, mock_fai
 def test_run_skips_send_when_no_notifications(mock_get, mock_get_email, mock_mark, mock_send, mock_sleep):
     mock_get.side_effect = [
         [],
-        Exception("stop loop"),
+        KeyboardInterrupt(),
     ]
 
-    with pytest.raises(Exception, match="stop loop"):
+    with pytest.raises(KeyboardInterrupt):
         email_worker.run(MagicMock())
 
     mock_send.assert_not_called()

@@ -1,35 +1,47 @@
 {% extends "base.html" %}
-{% block title %}My posted gigs{% endblock %}
+{% block title %}My posted gigs — GigBoard{% endblock %}
 {% block content %}
   <section class="panel dashboard-header">
-    <div>
-      <h1 style="margin:0;">My posted gigs</h1>
-      <p style="margin:0;" class="meta">{{ gigs|length }} {{ "gig" if gigs|length == 1 else "gigs" }} posted</p>
+    <div class="stack">
+      <h1>My posted gigs</h1>
+      <p class="meta">{{ gigs|length }} {{ "gig" if gigs|length == 1 else "gigs" }} posted</p>
     </div>
-    <a class="secondary-button" href="{{ url_for('management.new_gig') }}">Post a gig</a>
+    <a class="secondary-button" href="{{ url_for('management.new_gig') }}">+ Post a gig</a>
   </section>
+
   {% if gigs %}
     <div class="gig-list">
       {% for gig in gigs %}
-        <article class="gig-card">
+        <article class="gig-card" data-category="{{ gig.category }}">
           <div class="panel-row">
-            <div class="stack">
-              <h2 style="margin:0;">{{ gig.title }}</h2>
-              <p class="meta" style="margin:0;">
-                {{ gig.category or "uncategorized" }} &middot;
+            <div class="stack" style="flex:1; min-width:0;">
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <span class="cat-badge" data-category="{{ gig.category }}">{{ tag_labels.get(gig.category, gig.category) }}</span>
                 <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
+              </div>
+              <h2>{{ gig.title }}</h2>
+              <p class="meta">
+                {% if gig.location %}📍 {{ gig.location }}{% endif %}
+                {% if gig.date %} &middot; 📅 {{ gig.date }}{% endif %}
+                {% if gig.pay %} &middot; <span class="pay">{{ gig.pay }}</span>{% endif %}
               </p>
             </div>
-            <a class="secondary-button" href="/my/gigs/{{ gig._id or gig.id }}">View applicants</a>
+            <a class="secondary-button"
+               href="{{ url_for('management.gig_applicants', gig_id=gig._id or gig.id) }}">
+              View applicants
+            </a>
           </div>
         </article>
       {% endfor %}
     </div>
   {% else %}
     <section class="panel empty-state">
-      <h2>No gigs posted yet.</h2>
-      <p>Post a gig to start receiving applications.</p>
-      <a class="secondary-button" href="{{ url_for('management.new_gig') }}">Post a gig</a>
+      <span class="empty-state-icon">📋</span>
+      <h2>No gigs posted yet</h2>
+      <p>Create your first gig to start receiving applications from students.</p>
+      <div class="actions">
+        <a class="secondary-button" href="{{ url_for('management.new_gig') }}">+ Post your first gig</a>
+      </div>
     </section>
   {% endif %}
 {% endblock %}

@@ -64,8 +64,8 @@ def test_dashboard_uses_saved_tags_by_default(client, repository):
     assert b"Calculus review" not in response.data
     assert b"Old delivery job" not in response.data
     assert b"1 open gig" in response.data
-    assert b'action="/gigs/1/apply"' in response.data
-    assert b"Apply" in response.data
+    assert b'href="/gigs/1"' in response.data
+    assert b"View &amp; apply" in response.data
 
 
 def test_dashboard_query_tags_override_saved_tags(client, repository):
@@ -85,7 +85,7 @@ def test_dashboard_search_filters_matching_gigs(client, repository):
 
     response = client.get(
         "/",
-        query_string=[("tag", "delivery"), ("tag", "tutoring"), ("q", "derivatives")],
+        query_string=[("tag", "tutoring"), ("q", "derivatives")],
     )
 
     assert response.status_code == 200
@@ -100,7 +100,7 @@ def test_dashboard_empty_state(client, repository):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert b"No open gigs match your filters." in response.data
+    assert b"No gigs match your filters" in response.data
 
 
 def test_my_applications_page_handles_repository_user(client, repository):
@@ -110,7 +110,7 @@ def test_my_applications_page_handles_repository_user(client, repository):
 
     assert response.status_code == 200
     assert b"My applications" in response.data
-    assert b"No applications yet." in response.data
+    assert b"No applications yet" in response.data
 
 
 def test_dashboard_apply_button_creates_repository_application(client, repository):
@@ -122,7 +122,6 @@ def test_dashboard_apply_button_creates_repository_application(client, repositor
     assert response.status_code == 200
     assert b"Application submitted!" in response.data
     assert b"Move boxes" in response.data
-    assert b"Application:" in response.data
     assert b"pending" in response.data
 
 

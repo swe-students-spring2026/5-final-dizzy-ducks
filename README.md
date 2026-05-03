@@ -1,221 +1,186 @@
-# Dizzy Ducks
+# Dizzy Ducks — Gig Marketplace
 
-Dizzy Ducks is a Flask + MongoDB gig marketplace where users can post short-term jobs, search for gigs, apply with a message, manage applications, and receive email notifications through a standalone worker service.
+[![Web CI/CD](https://github.com/swe-students-spring2026/5-final-dizzy-ducks/actions/workflows/web.yml/badge.svg)](https://github.com/swe-students-spring2026/5-final-dizzy-ducks/actions/workflows/web.yml)
+[![Worker CI/CD](https://github.com/swe-students-spring2026/5-final-dizzy-ducks/actions/workflows/worker.yml/badge.svg)](https://github.com/swe-students-spring2026/5-final-dizzy-ducks/actions/workflows/worker.yml)
 
-This README is the shared project structure so the team can stay aligned while building.
+Dizzy Ducks is a campus gig marketplace where students can post short-term jobs, apply to gigs, and receive email notifications when opportunities matching their interests are posted. It is built with Flask, MongoDB, and a standalone email notification worker.
 
-## Project Scope
+## Team
 
-Users should be able to:
+- [antoniojacksnn](https://github.com/antoniojacksnn)
+- [ClaireBocz](https://github.com/ClaireBocz)
+- [FilthyS](https://github.com/FilthyS)
+- [harrisonmangitwong](https://github.com/harrisonmangitwong)
+- [sashacartagena](https://github.com/sashacartagena)
 
-- sign up and log in
-- choose job tags during onboarding
-- update skills, tags, and notification preferences from their profile
-- post a gig with a title, category, pay, location, date, and description
-- browse gigs by category
-- search gigs by keyword
-- view a full gig description page
-- apply to a gig with a short message
-- see a dashboard of gigs they posted and incoming applications
-- see a dashboard of gigs they applied to and their current status
-- accept or reject applicants for gigs they posted
+## Features
 
-## Core Subsystems
+- Sign up, log in, and choose job category tags during onboarding
+- Post gigs with title, category, pay, location, date, description, and optional custom questions
+- Browse and search open gigs by keyword or category tag
+- Apply to gigs with a message and answers to any required questions
+- Poster dashboard: view all posted gigs and incoming applications; accept or reject applicants
+- Applicant dashboard: track every application and its current status
+- Profile page: update name, tags, and email notification preferences
+- Email notifications via SendGrid for new gig matches, application receipts, status changes, and weekly digests
+
+## Architecture
 
 | Subsystem | Technology | Responsibility |
 | --- | --- | --- |
-| Web App | Flask | Handles authentication, onboarding, gig posting, gig search, applications, dashboards, and profile settings |
-| Database | MongoDB | Stores users, gigs, applications, and notification queue records |
-| Notification Worker | Python service in a separate container | Polls MongoDB, creates notification records, sends email, and marks notifications as sent |
+| Web app | Flask + Python 3.10 | Authentication, gig posting, browsing, applications, dashboards, profile |
+| Database | MongoDB 7 | Users, gigs, applications, notification queue |
+| Email worker | Python 3.12 | Polls MongoDB, sends emails via SendGrid, marks notifications sent/failed |
 
-## Screens
+## Quick Start (Docker Compose)
 
-| Screen | Purpose | Main Actions |
-| --- | --- | --- |
-| Log In / Sign Up | User entry point | Create account, log in |
-| Onboarding / Tags | Initial preference setup | Select job categories/tags for matching and notifications |
-| Dashboard / Home | Main landing page | Browse gigs, filter by tags, search by keyword or category |
-| Job Description | Single gig detail page | View gig details and apply with a short message |
-| Job Tracker | Application and posting overview | View jobs applied to, application statuses, and jobs posted |
-| Posted Jobs | Poster management page | See all gigs posted by the current user |
-| Posted Job Applicants | Applicant review page | View applicants, history, stars, job count, and accept/reject decisions |
-| User Profile | Account and preferences page | Update name, email, skills, tags, and notification settings |
+### 1. Clone the repository
 
-## MongoDB Collections
-
-### `users`
-
-Stores account, profile, skills, and notification settings.
-
-| Field | Description |
-| --- | --- |
-| `name` | User display name |
-| `email` | User email address |
-| `skills` | Skills listed by the user |
-| `notification_preferences` | Saved categories/tags and email preferences |
-
-Example notification preferences:
-
-```json
-{
-  "tags": ["tutoring", "delivery"],
-  "new_gig_alerts": true,
-  "application_alerts": true,
-  "status_alerts": true,
-  "weekly_digest": true
-}
+```bash
+git clone https://github.com/swe-students-spring2026/5-final-dizzy-ducks.git
+cd 5-final-dizzy-ducks
 ```
 
-### `gigs`
+### 2. Create environment files
 
-Stores posted gigs.
+Copy the example files and fill in your values:
 
-| Field | Description |
-| --- | --- |
-| `title` | Gig title |
-| `category` | Gig category/tag |
-| `pay` | Pay amount or pay description |
-| `location` | Gig location |
-| `date` | Date of the gig |
-| `description` | Full gig description |
-| `poster_id` | User ID of the poster |
-| `status` | `open` or `filled` |
-| `created_at` | Timestamp when the gig was created |
+```bash
+cp web/.env.example web/.env
+cp email-worker/.env.example email-worker/.env
+```
 
-### `applications`
+See [Environment Variables](#environment-variables) below for what each variable means.
 
-Stores applications submitted by users.
+### 3. Start all services
 
-| Field | Description |
-| --- | --- |
-| `gig_id` | Gig being applied to |
-| `applicant_id` | User ID of the applicant |
-| `message` | Short application message |
-| `status` | `pending`, `accepted`, or `rejected` |
-| `applied_at` | Timestamp when the application was submitted |
+```bash
+docker compose up --build
+```
 
-### `notifications`
+The web app will be available at **http://localhost:5001**.
 
-Acts as the queue of pending emails the notification worker needs to send.
+To run in the background:
 
-| Field | Description |
-| --- | --- |
-| `user_id` | User who should receive the email |
-| `type` | Notification type, such as `new_gig`, `application`, `status`, or `weekly_digest` |
-| `status` | `pending`, `sent`, or `failed` |
-| `subject` | Email subject |
-| `body` | Email body |
-| `created_at` | Timestamp when the notification was queued |
-| `scheduled_for` | Optional timestamp for delayed or digest emails |
-| `sent_at` | Timestamp after successful delivery |
-| `provider_message_id` | Optional SendGrid/SMTP provider message ID |
-| `dedupe_key` | Unique key to prevent duplicate sends |
+```bash
+docker compose up --build -d
+```
 
-## Notification Worker
+To stop:
 
-The notification worker is a standalone Python service running in its own container. It wakes up every configurable number of minutes and runs notification jobs.
+```bash
+docker compose down
+```
 
-| Job | Behavior |
-| --- | --- |
-| New Gig Alerts | Checks whether new gigs match a user's saved preferences, such as tutoring gigs, then queues an email |
-| Application Alerts | Emails a gig poster when someone applies to their gig |
-| Status Alerts | Emails an applicant when a poster accepts or rejects their application |
-| Weekly Digest | Every Monday morning, sends each user a summary of new gigs that fit their profile |
-| Email Sending | Sends pending emails through SendGrid or SMTP and marks them as sent in MongoDB |
+## Local Web App Development (without Docker)
 
-Worker requirements:
-
-- poll MongoDB every `X` minutes, controlled by configuration
-- create queued notification records before sending
-- send only notifications that are still pending
-- respect each user's notification preferences
-- mark notifications as `sent` after successful delivery
-- mark notifications as `failed` when delivery fails
-- use a `dedupe_key` so the same email is never sent twice
-
-## Email Delivery
-
-SendGrid is the planned email provider.
-
-SendGrid is a dedicated email delivery service owned by Twilio and built for apps that send automated emails. The app uses an API key and sends emails through the SendGrid API or Python SDK.
-
-Why SendGrid fits this project:
-
-- free tier gives 100 emails per day, enough for a class project
-- more reliable delivery than basic SMTP
-- better production path for automated emails
-- supports tracking such as open rates and click rates
-- slightly more setup, but cleaner to use in application code
-
-## Suggested Environment Variables
-
-| Variable | Purpose |
-| --- | --- |
-| `MONGODB_URI` | MongoDB connection string |
-| `MONGODB_DB_NAME` | MongoDB database name |
-| `FLASK_SECRET_KEY` | Flask session secret |
-| `SENDGRID_API_KEY` | SendGrid API key |
-| `MAIL_FROM_ADDRESS` | Sender email address |
-| `WORKER_POLL_MINUTES` | How often the worker wakes up |
-| `DIGEST_DAY` | Weekly digest day, expected value: `monday` |
-| `DIGEST_HOUR` | Hour when weekly digest emails should be queued |
-
-## Local Web App Development
-
-The Python environment is managed with Pipenv. Use Python 3.10.
+The Python environment is managed with Pipenv. Python 3.10 is required.
 
 ```bash
 pipenv install --dev
 pipenv run dev
 ```
 
-The web app runs at `http://127.0.0.1:5000`. If `MONGODB_URI` is not set, the app uses an in-memory repository for local development.
+If you see `pipenv: command not found`, either add `export PATH="$HOME/.local/bin:$PATH"` to your shell config (pip installs the binary there) or use `python -m pipenv install --dev` and `python -m pipenv run dev` instead.
 
-Run quality checks before committing web app changes:
+The web app runs at `http://127.0.0.1:5000`.
+
+If `MONGO_URI` is not set, the app starts with an in-memory repository and seeds it with sample gigs automatically, so no MongoDB instance is needed for basic development.
+
+Run quality checks before committing:
 
 ```bash
 pipenv run lint
 pipenv run test
 ```
 
-## Recommended Repo Structure
+## Local Email Worker Development
+
+```bash
+cd email-worker
+pip install -r requirements.txt
+python email_worker.py
+```
+
+Run worker tests:
+
+```bash
+cd email-worker
+pytest tests/ --cov=email_worker --cov-report=term-missing
+```
+
+## Environment Variables
+
+### Web app (`web/.env`)
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `SECRET_KEY` | Yes | Flask session signing secret. Use a long random string in production. |
+| `MONGO_URI` | No | MongoDB connection string. Defaults to `mongodb://mongo:27017` (Docker) or in-memory when unset. |
+| `MONGO_DB` | No | Database name. Defaults to `campus_gigs`. |
+| `ENABLE_DEV_AUTH` | No | Set to `1` to enable the dev login bypass at `/auth/dev-login`. **Never enable in production.** |
+
+### Email worker (`email-worker/.env`)
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `MONGO_URI` | Yes | MongoDB connection string, e.g. `mongodb://mongo:27017` or an Atlas URI. |
+| `MONGO_DB` | No | Database name. Defaults to `campus_gigs`. |
+| `SENDGRID_API_KEY` | Yes | SendGrid API key for email delivery. Get one at [sendgrid.com](https://sendgrid.com). |
+| `FROM_EMAIL` | Yes | Sender address used for all outgoing emails. |
+| `POLL_INTERVAL` | No | Seconds between polling runs. Defaults to `60`. |
+
+### Example `web/.env`
+
+```env
+SECRET_KEY=replace-with-a-long-random-secret
+MONGO_URI=mongodb://mongo:27017
+MONGO_DB=campus_gigs
+ENABLE_DEV_AUTH=1
+```
+
+### Example `email-worker/.env`
+
+```env
+MONGO_URI=mongodb://mongo:27017
+MONGO_DB=campus_gigs
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+FROM_EMAIL=noreply@yourdomain.com
+POLL_INTERVAL=60
+```
+
+## Importing Starter Data
+
+The web app seeds a small set of sample gigs automatically when running in in-memory mode (no `MONGO_URI`). For a production MongoDB instance, seed data can be inserted manually. A future `seed.py` script can be added to `web/` if needed.
+
+## Project Structure
 
 ```text
 .
-├── web/
+├── web/                    # Flask web app
+│   ├── app/                # Application package
+│   │   ├── blueprints/     # Route handlers (gigs, management, profile, dev_auth)
+│   │   ├── templates/      # Jinja2 templates specific to blueprints
+│   │   ├── utils/          # Auth helpers
+│   │   └── db.py           # MongoDB connection helpers
+│   ├── templates/          # Top-level Jinja2 templates (auth, dashboard, onboarding)
+│   ├── static/css/         # Stylesheet
+│   ├── auth.py             # Auth blueprint (signup, login, logout)
+│   ├── dashboard.py        # Dashboard blueprint
+│   ├── onboarding.py       # Onboarding blueprint
+│   ├── repositories.py     # InMemoryRepository and MongoRepository
+│   ├── tags.py             # Job tag definitions
+│   ├── wsgi.py             # WSGI entry point
 │   ├── Dockerfile
-│   └── ...
-├── worker/
+│   └── .env.example
+├── email-worker/           # Standalone notification worker
+│   ├── email_worker.py     # Worker logic
+│   ├── tests/
 │   ├── Dockerfile
-│   └── ...
-├── .github/
-│   └── workflows/
-├── README.md
-└── instructions.md
+│   └── .env.example
+├── tests/                  # Web app tests (InMemory)
+├── web/tests/              # Web app tests (mongomock)
+├── docker-compose.yml
+├── pyproject.toml
+└── Pipfile
 ```
-
-## Build Checklist
-
-- scaffold the Flask web app
-- create MongoDB connection utilities and collection helpers
-- implement sign up, log in, and onboarding
-- implement user profile settings for skills, tags, and notifications
-- implement gig posting
-- implement gig browsing, category filtering, and keyword search
-- implement gig detail pages
-- implement application submission
-- implement applicant and poster dashboards
-- implement accept/reject application flow
-- create the notification worker service
-- connect SendGrid or SMTP email delivery
-- add Dockerfiles for custom subsystems
-- add GitHub Actions workflows for custom subsystems
-- document local environment setup and deployment steps
-
-## Current Assumptions
-
-- Tags selected during onboarding are stored in `users.notification_preferences.tags`.
-- Gig status starts as `open` and becomes `filled` after an accepted applicant is chosen.
-- Application status starts as `pending` and changes to `accepted` or `rejected`.
-- Applicant history can start with basic profile data, skills, stars, and completed job count.
-- Weekly digest emails are sent Monday morning and include matching gigs created since the previous digest.

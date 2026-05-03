@@ -5,6 +5,8 @@ services:
       - "5001:5000"
     env_file:
       - ./web/.env
+    volumes:
+      - ./web:/app
     depends_on:
       - mongo
 

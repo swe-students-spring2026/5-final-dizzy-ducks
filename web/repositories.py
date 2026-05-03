@@ -114,7 +114,12 @@ class InMemoryRepository:
         return _serialize_user(user)
 
     def update_user_profile(
-        self, user_id: str, *, name: str | None = None, tags: list[str] | None = None
+        self,
+        user_id: str,
+        *,
+        name: str | None = None,
+        tags: list[str] | None = None,
+        notification_preferences: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         user = self.users.get(str(user_id))
         if user is None:
@@ -125,6 +130,10 @@ class InMemoryRepository:
         if tags is not None:
             user["notification_preferences"]["tags"] = normalize_tags(tags)
             user["tags"] = user["notification_preferences"]["tags"]
+        if notification_preferences is not None:
+            for key, value in notification_preferences.items():
+                if key != "tags":
+                    user["notification_preferences"][key] = value
         return _serialize_user(user)
 
     def create_gig(
@@ -314,7 +323,12 @@ class MongoRepository:
         return _serialize_user(result)
 
     def update_user_profile(
-        self, user_id: str, *, name: str | None = None, tags: list[str] | None = None
+        self,
+        user_id: str,
+        *,
+        name: str | None = None,
+        tags: list[str] | None = None,
+        notification_preferences: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         try:
             object_id = ObjectId(user_id)
@@ -328,6 +342,10 @@ class MongoRepository:
             normalized_tags = normalize_tags(tags)
             updates["tags"] = normalized_tags
             updates["notification_preferences.tags"] = normalized_tags
+        if notification_preferences is not None:
+            for key, value in notification_preferences.items():
+                if key != "tags":
+                    updates[f"notification_preferences.{key}"] = value
         if not updates:
             return self.get_user_by_id(user_id)
 

@@ -90,7 +90,7 @@ def login():
         password = request.form.get("password", "")
         user = current_app.repository.get_user_by_email(values["email"])
 
-        if user is None or not check_password_hash(user["password_hash"], password):
+        if user is None or not user.get("password_hash") or not check_password_hash(user["password_hash"], password):
             errors.append("Invalid email or password.")
         else:
             session.clear()

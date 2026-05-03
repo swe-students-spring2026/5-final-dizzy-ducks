@@ -8,6 +8,13 @@ services:
     depends_on:
       - mongo
 
+  worker:
+    build: ./email-worker
+    env_file:
+      - ./email-worker/.env
+    depends_on:
+      - mongo
+
   mongo:
     image: mongo:7
     ports:

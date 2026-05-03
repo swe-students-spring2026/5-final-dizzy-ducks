@@ -30,6 +30,14 @@
                 <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
               </p>
               {% if app.message %}<p style="margin:0; white-space: pre-wrap;">{{ app.message }}</p>{% endif %}
+              {% if app.answers %}
+                <div style="margin-top:0.5rem;">
+                  {% for qa in app.answers %}
+                    <p style="margin:0;"><strong>{{ qa.question }}</strong></p>
+                    <p style="margin:0 0 0.5rem; white-space:pre-wrap;">{{ qa.answer or "(no answer)" }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             <div class="stack" style="min-width:160px;">
               <form method="post"

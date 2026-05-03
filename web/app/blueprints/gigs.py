@@ -126,6 +126,15 @@ def apply(gig_id: str):
         return redirect(url_for("gigs.gig_detail", gig_id=gig_id))
 
     message = (request.form.get("message") or "").strip()
+    gig_questions = gig.get("questions", [])
+    answers = []
+    for i, q in enumerate(gig_questions):
+        answer = (request.form.get(f"answer_{i}") or "").strip()
+        if q.get("required") and not answer:
+            flash(f'"{q["text"]}" is required.', "error")
+            return redirect(url_for("gigs.gig_detail", gig_id=gig_id))
+        answers.append({"question": q["text"], "answer": answer})
+
     now = datetime.now(timezone.utc)
     result = db.applications.insert_one(
         {
@@ -133,6 +142,7 @@ def apply(gig_id: str):
             "applicant_id": g.user["_id"],
             "status": "pending",
             "message": message,
+            "answers": answers,
             "applied_at": now,
         }
     )

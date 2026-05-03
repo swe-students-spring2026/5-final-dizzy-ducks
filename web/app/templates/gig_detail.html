@@ -47,6 +47,13 @@
           <p class="hint" style="margin:0;">Your message</p>
           <p style="white-space: pre-wrap; margin:0;">{{ existing_application.message }}</p>
         {% endif %}
+        {% if existing_application.answers %}
+          <p class="hint" style="margin:0.5rem 0 0;">Your answers</p>
+          {% for qa in existing_application.answers %}
+            <p style="margin:0;"><strong>{{ qa.question }}</strong></p>
+            <p style="margin:0 0 0.5rem; white-space:pre-wrap;">{{ qa.answer or "(no answer)" }}</p>
+          {% endfor %}
+        {% endif %}
       </div>
     </section>
   {% else %}
@@ -60,6 +67,16 @@
                     rows="4"
                     placeholder="Tell them why you're a good fit…"></textarea>
         </label>
+        {% set questions = gig.questions or [] %}
+        {% for q in questions %}
+          <label>
+            {{ q.text }}{% if q.required %} <span style="color:red;">*</span>{% endif %}
+            <textarea name="answer_{{ loop.index0 }}"
+                      rows="3"
+                      {% if q.required %}required{% endif %}
+                      placeholder="Your answer…"></textarea>
+          </label>
+        {% endfor %}
         <div class="actions">
           <button type="submit">Submit application</button>
         </div>

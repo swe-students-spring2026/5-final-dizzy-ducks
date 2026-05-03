@@ -1,0 +1,39 @@
+name: web
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "web/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "Pipfile"
+      - "Pipfile.lock"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "web/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "Pipfile"
+      - "Pipfile.lock"
+
+jobs:
+  test:
+    name: Test (Python 3.10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests with coverage
+        run: pytest

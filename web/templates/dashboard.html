@@ -1,60 +1,89 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Browse gigs — GigBoard{% endblock %}
 {% block content %}
   <section class="panel dashboard-header">
-    <div>
+    <div class="stack">
       <h1>Find gigs</h1>
-      <p>{{ gigs|length }} open {{ "gig" if gigs|length == 1 else "gigs" }}</p>
+      <p class="meta">{{ gigs|length }} open {{ "gig" if gigs|length == 1 else "gigs" }}</p>
     </div>
-    <a class="secondary-button"
-       href="{{ url_for('onboarding.choose_tags') }}">Edit tags</a>
+    <a class="secondary-button" href="{{ url_for('onboarding.choose_tags') }}">Edit preferences</a>
   </section>
+
   <section class="panel">
-    <form class="filter-form" method="get">
-      <label>
-        Search
-        <input name="q" value="{{ search }}" placeholder="Title, place, or detail">
-      </label>
-      <fieldset class="tag-grid">
-        <legend>Filter by tags</legend>
-        {% for tag in job_tags %}
-          <label class="tag-option">
-            <input type="checkbox"
-                   name="tag"
-                   value="{{ tag }}"
-                   {% if tag in selected_tags %}checked{% endif %}>
-            {{ tag_labels[tag] }}
-          </label>
-        {% endfor %}
-      </fieldset>
-      <div class="actions">
-        <button type="submit">Apply filters</button>
-        <a href="{{ url_for('dashboard.index') }}">Use saved tags</a>
+    <form method="get"
+          style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem;">
+      <div style="flex:1 1 180px; min-width:0; display:grid; gap:0.25rem;">
+        <label for="dashboard-q"
+               style="font-size:0.8rem; font-weight:600; color:var(--text-3);">Search</label>
+        <input id="dashboard-q"
+               name="q"
+               value="{{ search }}"
+               placeholder="Keyword, location…"
+               autocomplete="off">
       </div>
+      <div style="flex:0 0 200px; display:grid; gap:0.25rem;">
+        <label for="dashboard-tag"
+               style="font-size:0.8rem; font-weight:600; color:var(--text-3);">Category</label>
+        <select id="dashboard-tag" name="tag" onchange="this.form.submit()"
+                style="cursor:pointer;">
+          <option value=""
+                  {% if tag_filter_value is none %}selected{% endif %}>My saved tags</option>
+          <option value="__all__"
+                  {% if tag_filter_value == '__all__' %}selected{% endif %}>All categories</option>
+          {% for tag in job_tags %}
+            <option value="{{ tag }}"
+                    {% if tag_filter_value == tag %}selected{% endif %}>{{ tag_labels[tag] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" style="flex-shrink:0;">Search</button>
+      {% if search or tag_filter_value %}
+        <a class="secondary-button"
+           href="{{ url_for('dashboard.index') }}"
+           style="flex-shrink:0;">Clear</a>
+      {% endif %}
     </form>
   </section>
+
   {% if gigs %}
-    <section class="gig-list" aria-label="Open gigs">
+    <div class="gig-list" aria-label="Open gigs">
       {% for gig in gigs %}
-        <article class="gig-card">
-          <div>
-            <h2>{{ gig.title }}</h2>
-            <p class="meta">
-              {{ tag_labels.get(gig.category, gig.category) }} &middot; {{ gig.location }} &middot; {{ gig.date }}
-            </p>
+        <article class="gig-card" data-category="{{ gig.category }}">
+          <div class="panel-row" style="align-items:flex-start; gap:0.75rem;">
+            <div class="stack" style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="cat-badge" data-category="{{ gig.category }}">{{ tag_labels.get(gig.category, gig.category) }}</span>
+                <span class="meta">{{ gig.date }}</span>
+              </div>
+              <h2>
+                <a href="{{ url_for('gigs.gig_detail', gig_id=gig._id or gig.id) }}"
+                   style="color:inherit; text-decoration:none;">{{ gig.title }}</a>
+              </h2>
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                {% if gig.location %}
+                  <span class="meta">📍 {{ gig.location }}</span>
+                {% endif %}
+                {% if gig.pay %}
+                  <span class="pay">{{ gig.pay }}</span>
+                {% endif %}
+              </div>
+              <p class="meta">{{ gig.description | truncate(150) }}</p>
+            </div>
+            <a class="secondary-button"
+               href="{{ url_for('gigs.gig_detail', gig_id=gig._id or gig.id) }}">View &amp; apply</a>
           </div>
-          <p class="pay">{{ gig.pay }}</p>
-          <p>{{ gig.description }}</p>
-          <form method="post" action="{{ url_for('gigs.apply', gig_id=gig.id) }}">
-            <button type="submit">Apply</button>
-          </form>
         </article>
       {% endfor %}
-    </section>
+    </div>
   {% else %}
     <section class="panel empty-state">
-      <h2>No open gigs match your filters.</h2>
-      <p>Try a different search or update your saved tags.</p>
+      <span class="empty-state-icon">🔍</span>
+      <h2>No gigs match your filters</h2>
+      <p>Try broadening your search or updating your saved tags.</p>
+      <div class="actions">
+        <a class="secondary-button" href="{{ url_for('dashboard.index') }}">Clear filters</a>
+        <a class="secondary-button" href="{{ url_for('onboarding.choose_tags') }}">Edit tags</a>
+      </div>
     </section>
   {% endif %}
 {% endblock %}

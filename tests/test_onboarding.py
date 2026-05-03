@@ -1,3 +1,6 @@
+import re
+
+
 def _signup(client):
     client.post(
         "/signup",
@@ -40,5 +43,4 @@ def test_onboarding_checks_previously_saved_tags(client, repository):
     response = client.get("/onboarding")
 
     assert response.status_code == 200
-    assert b'value="tutoring"' in response.data
-    assert b"checked" in response.data
+    assert re.search(rb'value="tutoring"\s[^>]*\bselected\b', response.data)

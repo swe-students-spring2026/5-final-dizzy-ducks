@@ -1,76 +1,94 @@
 {% extends "base.html" %}
-{% block title %}{{ gig.title }}{% endblock %}
+{% block title %}{{ gig.title }} — GigBoard{% endblock %}
 {% block content %}
-  <section class="panel panel-row">
-    <div class="stack">
-      <h1 style="margin:0;">{{ gig.title }}</h1>
-      <p class="meta" style="margin:0;">
-        {{ gig.category or "uncategorized" }}
-        {% if gig.pay %}&middot; <span class="pay">{{ gig.pay }}</span>{% endif %}
-        &middot; <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
-      </p>
+  <section class="panel panel-row" style="align-items:flex-start;">
+    <div class="stack" style="flex:1; min-width:0;">
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <span class="cat-badge" data-category="{{ gig.category }}">
+          {{ tag_labels.get(gig.category, gig.category) or "Uncategorized" }}
+        </span>
+        <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
+      </div>
+      <h1>{{ gig.title }}</h1>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+        {% if gig.pay %}
+          <span class="pay">{{ gig.pay }}</span>
+        {% endif %}
+        {% if gig.location %}
+          <span class="meta">📍 {{ gig.location }}</span>
+        {% endif %}
+        {% if gig.date %}
+          <span class="meta">📅 {{ gig.date }}</span>
+        {% endif %}
+      </div>
     </div>
-    <a class="secondary-button" href="javascript:history.back()">Back</a>
+    <a class="secondary-button" href="javascript:history.back()">← Back</a>
   </section>
+
   <section class="panel">
-    <h2 style="margin-top:0;">Description</h2>
-    <p style="white-space: pre-wrap; margin:0;">{{ gig.description or "No description provided." }}</p>
+    <h2>Description</h2>
+    <hr class="divider">
+    <p style="white-space: pre-wrap; line-height:1.65;">{{ gig.description or "No description provided." }}</p>
   </section>
+
   {% if poster %}
     <section class="panel">
-      <p class="hint" style="margin-top:0;">Posted by</p>
-      <div class="stack">
-        <strong>{{ poster.name or "Unknown" }}</strong>
-        <span class="meta">{{ poster.email or "" }}</span>
-      </div>
+      <p class="hint" style="margin-bottom:0.5rem;">Posted by</p>
+      <strong>{{ poster.name or "Unknown" }}</strong>
+      {% if poster.email %}
+        <span class="meta"> · {{ poster.email }}</span>
+      {% endif %}
     </section>
   {% endif %}
+
   {% if is_poster %}
-    <section class="panel">
-      <p style="margin:0;">
-        This is your gig.
-        {% if gig._id %}<a href="{{ url_for('management.gig_applicants', gig_id=gig._id) }}">View applicants →</a>{% endif %}
-      </p>
+    <section class="panel" style="background:var(--brand-bg); border-color:var(--brand);">
+      <p style="color:var(--brand); font-weight:600; margin-bottom:0.25rem;">This is your gig</p>
+      {% if gig._id %}
+        <a href="{{ url_for('management.gig_applicants', gig_id=gig._id) }}">View applicants →</a>
+      {% endif %}
     </section>
   {% elif gig.status != "open" %}
-    <section class="panel">
-      <p class="meta" style="margin:0;">This gig is no longer accepting applications.</p>
+    <section class="panel empty-state" style="padding:1.5rem;">
+      <p class="meta">This gig is no longer accepting applications.</p>
     </section>
   {% elif existing_application %}
     <section class="panel">
-      <p class="hint" style="margin-top:0;">Your application</p>
-      <div class="stack">
-        <div>
-          Status: <span class="badge badge-{{ existing_application.status or 'pending' }}">{{ existing_application.status or "pending" }}</span>
-        </div>
-        {% if existing_application.message %}
-          <p class="hint" style="margin:0;">Your message</p>
-          <p style="white-space: pre-wrap; margin:0;">{{ existing_application.message }}</p>
-        {% endif %}
-        {% if existing_application.answers %}
-          <p class="hint" style="margin:0.5rem 0 0;">Your answers</p>
-          {% for qa in existing_application.answers %}
-            <p style="margin:0;"><strong>{{ qa.question }}</strong></p>
-            <p style="margin:0 0 0.5rem; white-space:pre-wrap;">{{ qa.answer or "(no answer)" }}</p>
-          {% endfor %}
-        {% endif %}
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+        <h2 style="margin:0;">Your application</h2>
+        <span class="badge badge-{{ existing_application.status or 'pending' }}">{{ existing_application.status or "pending" }}</span>
       </div>
+      {% if existing_application.message %}
+        <hr class="divider">
+        <p class="hint" style="margin-bottom:0.25rem;">Your message</p>
+        <p style="white-space: pre-wrap;">{{ existing_application.message }}</p>
+      {% endif %}
+      {% if existing_application.answers %}
+        <hr class="divider">
+        <p class="hint" style="margin-bottom:0.5rem;">Your answers</p>
+        {% for qa in existing_application.answers %}
+          <p style="font-weight:600; margin-bottom:0.2rem;">{{ qa.question }}</p>
+          <p style="white-space:pre-wrap; margin-bottom:0.75rem;">{{ qa.answer or "(no answer)" }}</p>
+        {% endfor %}
+      {% endif %}
     </section>
   {% else %}
     <section class="panel">
-      <h2 style="margin-top:0;">Apply</h2>
+      <h2>Apply for this gig</h2>
+      <hr class="divider">
       <form method="post"
             action="{{ url_for('gigs.apply', gig_id=gig._id or gig.id) }}">
         <label>
-          Message to poster <span class="hint">(optional)</span>
-          <textarea name="message"
-                    rows="4"
-                    placeholder="Tell them why you're a good fit…"></textarea>
+          Cover message
+          <span class="hint">(optional)</span>
+          <textarea name="message" rows="4"
+                    placeholder="Introduce yourself and explain why you'd be a great fit…"></textarea>
         </label>
         {% set questions = gig.questions or [] %}
         {% for q in questions %}
           <label>
-            {{ q.text }}{% if q.required %} <span style="color:red;">*</span>{% endif %}
+            {{ q.text }}
+            {% if q.required %}<span style="color:var(--red);">*</span>{% endif %}
             <textarea name="answer_{{ loop.index0 }}"
                       rows="3"
                       {% if q.required %}required{% endif %}
@@ -79,6 +97,7 @@
         {% endfor %}
         <div class="actions">
           <button type="submit">Submit application</button>
+          <a href="javascript:history.back()">Cancel</a>
         </div>
       </form>
     </section>

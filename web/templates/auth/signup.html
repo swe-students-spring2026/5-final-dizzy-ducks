@@ -1,30 +1,41 @@
 {% extends "base.html" %}
-{% block title %}Sign up{% endblock %}
+{% block title %}Sign up — GigBoard{% endblock %}
 {% block content %}
-  <section class="panel narrow">
-    <h1>Create account</h1>
-    {% if errors %}
-      <ul class="errors">
-        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-      </ul>
-    {% endif %}
-    <form method="post">
-      <label>
-        Name
-        <input name="name" value="{{ values.name }}" required>
-      </label>
-      <label>
-        Email
-        <input type="email" name="email" value="{{ values.email }}" required>
-      </label>
-      <label>
-        Password
-        <input type="password" name="password" minlength="8" required>
-      </label>
-      <button type="submit">Sign up</button>
-    </form>
-    <p>
-      Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>.
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <a class="auth-brand-name" href="{{ url_for('dashboard.index') }}">GigBoard</a>
+      <p>Find or post campus gigs</p>
+    </div>
+
+    <section class="panel narrow">
+      {% if errors %}
+        <ul class="errors">
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      <form method="post">
+        <label>
+          Full name
+          <input name="name" value="{{ values.name }}"
+                 required autocomplete="name" placeholder="Alex Smith">
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" value="{{ values.email }}"
+                 required autocomplete="email" placeholder="you@university.edu">
+        </label>
+        <label>
+          Password
+          <span class="hint">At least 8 characters</span>
+          <input type="password" name="password"
+                 minlength="8" required autocomplete="new-password" placeholder="••••••••">
+        </label>
+        <button type="submit" style="width:100%;">Create account</button>
+      </form>
+    </section>
+
+    <p class="auth-footer">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>
     </p>
-  </section>
+  </div>
 {% endblock %}

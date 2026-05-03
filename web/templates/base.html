@@ -3,22 +3,26 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>
-      {% block title %}Gig Marketplace{% endblock %}
-    </title>
+    <title>{% block title %}GigBoard{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/main.css') }}">
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="{{ url_for('dashboard.index') }}">Gigs</a>
+      <a class="brand" href="{{ url_for('dashboard.index') }}">GigBoard</a>
       <nav>
         {% if g.user %}
+          <a href="{{ url_for('dashboard.index') }}">Browse</a>
           <a href="{{ url_for('management.new_gig') }}">Post a gig</a>
-          <a href="{{ url_for('management.my_gigs') }}">My posted gigs</a>
-          <a href="{{ url_for('gigs.my_applied') }}">My applications</a>
-          <a href="{{ url_for('onboarding.choose_tags') }}">Tags</a>
-          <a href="{{ url_for('profile.me') }}">Profile</a>
+          <a href="{{ url_for('management.my_gigs') }}">My gigs</a>
+          <a href="{{ url_for('gigs.my_applied') }}">Applications</a>
+          <a href="{{ url_for('profile.me') }}">
+            {{ g.user.name.split()[0] if g.user.name else "Profile" }}
+          </a>
           <form class="inline-form"
                 action="{{ url_for('auth.logout') }}"
                 method="post">
@@ -26,12 +30,14 @@
           </form>
         {% else %}
           <a href="{{ url_for('auth.login') }}">Log in</a>
-          <a href="{{ url_for('auth.signup') }}">Sign up</a>
+          <a href="{{ url_for('auth.signup') }}" class="nav-cta">Sign up free</a>
         {% endif %}
       </nav>
     </header>
     <main class="page">
-      {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+      {% for category, message in get_flashed_messages(with_categories=True) %}
+        <p class="flash flash-{{ category }}">{{ message }}</p>
+      {% endfor %}
       {% block content %}{% endblock %}
     </main>
   </body>

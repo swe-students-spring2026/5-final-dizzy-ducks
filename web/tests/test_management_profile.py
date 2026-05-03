@@ -160,7 +160,7 @@ def test_profile_update_tags(app, client):
     _login(client, me)
     res = client.post(
         "/me",
-        data={"name": "Me2", "tags": "moving, tutoring, , dog-walking"},
+        data={"name": "Me2", "tags": "delivery, tutoring, , yard-work"},
         follow_redirects=True,
     )
     assert res.status_code == 200
@@ -171,4 +171,4 @@ def test_profile_update_tags(app, client):
         db = get_db()
         user = db.users.find_one({"_id": me})
         assert user["name"] == "Me2"
-        assert user["tags"] == ["moving", "tutoring", "dog-walking"]
+        assert user["tags"] == ["tutoring", "delivery", "yard-work"]

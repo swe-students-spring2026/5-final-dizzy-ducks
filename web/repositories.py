@@ -57,12 +57,20 @@ def _serialize_gig(document: dict[str, Any]) -> dict[str, Any]:
     return serialized
 
 
+def _serialize_application(document: dict[str, Any]) -> dict[str, Any]:
+    serialized = deepcopy(document)
+    serialized["id"] = str(serialized.pop("_id"))
+    return serialized
+
+
 @dataclass
 class InMemoryRepository:
     users: dict[str, dict[str, Any]] = field(default_factory=dict)
     gigs: dict[str, dict[str, Any]] = field(default_factory=dict)
+    applications: dict[str, dict[str, Any]] = field(default_factory=dict)
     _next_user_id: int = 1
     _next_gig_id: int = 1
+    _next_application_id: int = 1
     _lock: RLock = field(default_factory=RLock)
 
     def create_user(
@@ -173,6 +181,79 @@ class InMemoryRepository:
             if str(gig.get("poster_id")) == str(poster_id)
         ]
         return sorted(matches, key=lambda gig: gig["created_at"], reverse=True)
+
+    def get_gig_by_id(self, gig_id: str) -> dict[str, Any] | None:
+        gig = self.gigs.get(str(gig_id))
+        if gig is None:
+            return None
+        return _serialize_gig(gig)
+
+    def get_application(
+        self, *, gig_id: str, applicant_id: str
+    ) -> dict[str, Any] | None:
+        for application in self.applications.values():
+            if str(application["gig_id"]) == str(gig_id) and str(
+                application["applicant_id"]
+            ) == str(applicant_id):
+                return _serialize_application(application)
+        return None
+
+    def create_application(
+        self, *, gig_id: str, applicant_id: str, message: str = ""
+    ) -> dict[str, Any]:
+        with self._lock:
+            application_id = str(self._next_application_id)
+            self._next_application_id += 1
+            self.applications[application_id] = {
+                "_id": application_id,
+                "gig_id": str(gig_id),
+                "applicant_id": str(applicant_id),
+                "status": "pending",
+                "message": message,
+                "applied_at": datetime.now(timezone.utc),
+            }
+            return _serialize_application(self.applications[application_id])
+
+    def list_applications_by_applicant(self, applicant_id: str) -> list[dict[str, Any]]:
+        matches = [
+            _serialize_application(application)
+            for application in self.applications.values()
+            if str(application.get("applicant_id")) == str(applicant_id)
+        ]
+        return sorted(matches, key=lambda app: app["applied_at"], reverse=True)
+
+    def list_applications_by_gig(self, gig_id: str) -> list[dict[str, Any]]:
+        matches = [
+            _serialize_application(application)
+            for application in self.applications.values()
+            if str(application.get("gig_id")) == str(gig_id)
+        ]
+        return sorted(matches, key=lambda app: app["applied_at"], reverse=True)
+
+    def get_application_by_id(self, application_id: str) -> dict[str, Any] | None:
+        application = self.applications.get(str(application_id))
+        if application is None:
+            return None
+        return _serialize_application(application)
+
+    def update_application_status(
+        self, application_id: str, status: str
+    ) -> dict[str, Any] | None:
+        application = self.applications.get(str(application_id))
+        if application is None:
+            return None
+
+        application["status"] = status
+        application["decided_at"] = datetime.now(timezone.utc)
+        return _serialize_application(application)
+
+    def update_gig_status(self, gig_id: str, status: str) -> dict[str, Any] | None:
+        gig = self.gigs.get(str(gig_id))
+        if gig is None:
+            return None
+
+        gig["status"] = status
+        return _serialize_gig(gig)
 
 
 class MongoRepository:
@@ -316,6 +397,17 @@ class MongoRepository:
             "created_at", DESCENDING
         )
         return [_serialize_gig(document) for document in documents]
+
+    def get_gig_by_id(self, gig_id: str) -> dict[str, Any] | None:
+        try:
+            object_id = ObjectId(gig_id)
+        except (InvalidId, TypeError):
+            return None
+
+        document = self.gigs.find_one({"_id": object_id})
+        if document is None:
+            return None
+        return _serialize_gig(document)
 
 
 def _gig_matches_search(gig: dict[str, Any], search_text: str) -> bool:

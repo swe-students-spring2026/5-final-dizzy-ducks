@@ -45,6 +45,9 @@
           </div>
           <p class="pay">{{ gig.pay }}</p>
           <p>{{ gig.description }}</p>
+          <form method="post" action="{{ url_for('gigs.apply', gig_id=gig.id) }}">
+            <button type="submit">Apply</button>
+          </form>
         </article>
       {% endfor %}
     </section>

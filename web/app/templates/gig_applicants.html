@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Applicants — {{ gig.title }}{% endblock %}
 {% block content %}
-
   <section class="panel panel-row">
     <div class="stack">
       <h1 style="margin:0;">Applicants</h1>
@@ -12,7 +11,6 @@
     </div>
     <a class="secondary-button" href="{{ url_for('management.my_gigs') }}">Back</a>
   </section>
-
   {% if enriched %}
     <div class="gig-list">
       {% for row in enriched %}
@@ -24,23 +22,24 @@
             <div class="stack" style="flex:1;">
               <div>
                 <strong>{{ user.name or "Unnamed" }}</strong>
-                <span class="meta"> · {{ user.email or "no email" }}</span>
+                <span class="meta">· {{ user.email or "no email" }}</span>
               </div>
               <p class="meta" style="margin:0;">
                 ⭐ {{ stats.rating_avg }} ({{ stats.rating_count }} ratings) &middot;
                 {{ stats.jobs_completed }} jobs completed &middot;
                 <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
               </p>
-              {% if app.message %}
-                <p style="margin:0; white-space: pre-wrap;">{{ app.message }}</p>
-              {% endif %}
+              {% if app.message %}<p style="margin:0; white-space: pre-wrap;">{{ app.message }}</p>{% endif %}
             </div>
             <div class="stack" style="min-width:160px;">
-              <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision">
+              <form method="post"
+                    action="/my/gigs/{{ gig._id or gig.id }}/applications/{{ app._id or app.id }}/decision">
                 <input type="hidden" name="action" value="accept" />
                 <button type="submit">Accept</button>
               </form>
-              <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision" style="margin-top:0.5rem;">
+              <form method="post"
+                    action="/my/gigs/{{ gig._id or gig.id }}/applications/{{ app._id or app.id }}/decision"
+                    style="margin-top:0.5rem">
                 <input type="hidden" name="action" value="reject" />
                 <button type="submit" style="background:#c0392b;">Reject</button>
               </form>
@@ -55,5 +54,4 @@
       <p>Check back later.</p>
     </section>
   {% endif %}
-
 {% endblock %}

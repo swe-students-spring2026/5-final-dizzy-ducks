@@ -10,6 +10,11 @@ def _signup_and_onboard(client, tags=("delivery",)):
     client.post("/onboarding", data={"tags": list(tags)})
 
 
+def _login(client, user_id):
+    with client.session_transaction() as sess:
+        sess["user_id"] = str(user_id)
+
+
 def _seed_gigs(repository):
     repository.create_gig(
         title="Move boxes",
@@ -59,6 +64,8 @@ def test_dashboard_uses_saved_tags_by_default(client, repository):
     assert b"Calculus review" not in response.data
     assert b"Old delivery job" not in response.data
     assert b"1 open gig" in response.data
+    assert b'action="/gigs/1/apply"' in response.data
+    assert b"Apply" in response.data
 
 
 def test_dashboard_query_tags_override_saved_tags(client, repository):
@@ -94,3 +101,113 @@ def test_dashboard_empty_state(client, repository):
 
     assert response.status_code == 200
     assert b"No open gigs match your filters." in response.data
+
+
+def test_my_applications_page_handles_repository_user(client, repository):
+    _signup_and_onboard(client, tags=("delivery",))
+
+    response = client.get("/my/applied")
+
+    assert response.status_code == 200
+    assert b"My applications" in response.data
+    assert b"No applications yet." in response.data
+
+
+def test_dashboard_apply_button_creates_repository_application(client, repository):
+    _seed_gigs(repository)
+    _signup_and_onboard(client, tags=("delivery",))
+
+    response = client.post("/gigs/1/apply", follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Application submitted!" in response.data
+    assert b"Move boxes" in response.data
+    assert b"Application:" in response.data
+    assert b"pending" in response.data
+
+
+def test_repository_gig_detail_shows_existing_application(client, repository):
+    _seed_gigs(repository)
+    _signup_and_onboard(client, tags=("delivery",))
+    client.post("/gigs/1/apply")
+
+    response = client.get("/gigs/1")
+
+    assert response.status_code == 200
+    assert b"Move boxes" in response.data
+    assert b"Your application" in response.data
+
+
+def test_repository_view_applicants_lists_applicant(client, repository):
+    poster = repository.create_user(
+        name="Poster",
+        email="poster@example.com",
+        password_hash="hash",
+    )
+    applicant = repository.create_user(
+        name="Applicant",
+        email="applicant@example.com",
+        password_hash="hash",
+    )
+    gig = repository.create_gig(
+        title="Set up chairs",
+        category="event-help",
+        pay="$40",
+        location="Student Center",
+        date="2026-05-20",
+        description="Set up chairs for an event.",
+        poster_id=poster["id"],
+    )
+    repository.create_application(
+        gig_id=gig["id"],
+        applicant_id=applicant["id"],
+        message="I can help.",
+    )
+    _login(client, poster["id"])
+
+    response = client.get(f"/my/gigs/{gig['id']}")
+
+    assert response.status_code == 200
+    assert b"Applicants" in response.data
+    assert b"Applicant" in response.data
+    assert b"I can help." in response.data
+    assert b"Accept" in response.data
+
+
+def test_repository_poster_can_accept_application(client, repository):
+    poster = repository.create_user(
+        name="Poster",
+        email="poster@example.com",
+        password_hash="hash",
+    )
+    applicant = repository.create_user(
+        name="Applicant",
+        email="applicant@example.com",
+        password_hash="hash",
+    )
+    gig = repository.create_gig(
+        title="Set up chairs",
+        category="event-help",
+        pay="$40",
+        location="Student Center",
+        date="2026-05-20",
+        description="Set up chairs for an event.",
+        poster_id=poster["id"],
+    )
+    application = repository.create_application(
+        gig_id=gig["id"],
+        applicant_id=applicant["id"],
+        message="I can help.",
+    )
+    _login(client, poster["id"])
+
+    response = client.post(
+        f"/my/gigs/{gig['id']}/applications/{application['id']}/decision",
+        data={"action": "accept"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Applicant accepted" in response.data
+    assert repository.get_application_by_id(application["id"])["status"] == "accepted"
+    assert repository.get_gig_by_id(gig["id"])["status"] == "filled"

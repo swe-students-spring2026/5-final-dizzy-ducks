@@ -16,7 +16,7 @@ POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", 60))
 
 def get_db(uri=MONGO_URI):
     client = MongoClient(uri)
-    return client["gigboard"]
+    return client["campus_gigs"]
 
 
 def get_pending_notifications(db):

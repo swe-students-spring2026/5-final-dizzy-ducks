@@ -14,7 +14,7 @@ bp = Blueprint("gigs", __name__)
 def _oid(value: str) -> ObjectId:
     try:
         return ObjectId(value)
-    except (TypeError, ValueError):
+    except Exception:
         abort(404)
 
 

@@ -1,6 +1,8 @@
 FROM python:3.12-slim
 
 # Set working directory
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 # Install dependencies first (better caching)

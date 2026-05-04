@@ -1,26 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Log in{% endblock %}
+{% block title %}Log in — GigBoard{% endblock %}
 {% block content %}
-  <section class="panel narrow">
-    <h1>Log in</h1>
-    {% if errors %}
-      <ul class="errors">
-        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-      </ul>
-    {% endif %}
-    <form method="post">
-      <label>
-        Email
-        <input type="email" name="email" value="{{ values.email }}" required>
-      </label>
-      <label>
-        Password
-        <input type="password" name="password" required>
-      </label>
-      <button type="submit">Log in</button>
-    </form>
-    <p>
-      Need an account? <a href="{{ url_for('auth.signup') }}">Sign up</a>.
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <a class="auth-brand-name" href="{{ url_for('dashboard.index') }}">GigBoard</a>
+      <p>Welcome back</p>
+    </div>
+
+    <section class="panel narrow">
+      {% if errors %}
+        <ul class="errors">
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      <form method="post">
+        <label>
+          Email
+          <input type="email" name="email" value="{{ values.email }}"
+                 required autocomplete="email" placeholder="you@university.edu">
+        </label>
+        <label>
+          Password
+          <input type="password" name="password"
+                 required autocomplete="current-password" placeholder="••••••••">
+        </label>
+        <button type="submit" style="width:100%;">Log in</button>
+      </form>
+    </section>
+
+    <p class="auth-footer">
+      Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up free</a>
     </p>
-  </section>
+  </div>
 {% endblock %}

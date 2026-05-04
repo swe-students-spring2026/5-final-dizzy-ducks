@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Post a gig — GigBoard{% endblock %}
+{% block content %}
+  <section class="panel" style="max-width:640px; margin:0 auto;">
+    <div style="margin-bottom:1.25rem;">
+      <h1>Post a gig</h1>
+      <p class="meta">Fill in the details below to start receiving applications.</p>
+    </div>
+    <hr class="divider">
+
+    {% if errors %}
+      <ul class="errors" style="margin-bottom:1rem;">
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post">
+      <label>
+        Gig title
+        <input name="title" value="{{ values.title }}" required
+               placeholder="e.g. Help me move apartments">
+      </label>
+      <label>
+        Category
+        <select name="category" required>
+          <option value="" {% if not values.category %}selected{% endif %}>Choose a category…</option>
+          {% for tag in job_tags %}
+            <option value="{{ tag }}" {% if values.category == tag %}selected{% endif %}>{{ tag_labels[tag] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <label>
+          Pay
+          <input name="pay" value="{{ values.pay }}" required placeholder="e.g. $40 or $25/hr">
+        </label>
+        <label>
+          Date
+          <input type="date" name="date" value="{{ values.date }}" required>
+        </label>
+      </div>
+
+      <label>
+        Location
+        <input name="location" value="{{ values.location }}" required
+               placeholder="e.g. North Campus Library, Room 204">
+      </label>
+      <label>
+        Description
+        <textarea name="description" rows="5" required
+                  placeholder="Describe what the job involves, what you need, and any relevant details…">{{ values.description }}</textarea>
+      </label>
+
+      <fieldset class="questions-fieldset">
+        <legend>Screening questions <span class="hint">(optional)</span></legend>
+        <p class="hint" style="margin:0.3rem 0 0.75rem;">Add questions applicants must answer when applying.</p>
+        <div id="questions-container">
+          {% for q in questions %}
+            <div class="question-row" id="question_row_{{ loop.index0 }}">
+              <input type="text"
+                     name="question_text_{{ loop.index0 }}"
+                     value="{{ q.text }}"
+                     placeholder="e.g. Do you have a car?">
+              <label class="question-required-label">
+                <input type="checkbox"
+                       name="question_required_{{ loop.index0 }}"
+                       {% if q.required %}checked{% endif %}>
+                Required
+              </label>
+              <button type="button" class="danger"
+                      onclick="removeQuestion({{ loop.index0 }})">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="question_count" id="question_count" value="{{ questions|length }}">
+        <button type="button" class="add-question-btn" onclick="addQuestion()">+ Add question</button>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">Post gig</button>
+        <a class="secondary-button" href="{{ url_for('management.my_gigs') }}">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    let nextIndex = {{ questions|length }};
+
+    function addQuestion() {
+      const container = document.getElementById('questions-container');
+      const i = nextIndex++;
+      document.getElementById('question_count').value = nextIndex;
+      const row = document.createElement('div');
+      row.className = 'question-row';
+      row.id = 'question_row_' + i;
+      row.innerHTML =
+        '<input type="text" name="question_text_' + i + '" placeholder="e.g. Do you have a car?">' +
+        '<label class="question-required-label">' +
+        '<input type="checkbox" name="question_required_' + i + '"> Required</label>' +
+        '<button type="button" class="danger" onclick="removeQuestion(' + i + ')">✕</button>';
+      container.appendChild(row);
+    }
+
+    function removeQuestion(i) {
+      const row = document.getElementById('question_row_' + i);
+      if (row) row.remove();
+    }
+  </script>
+{% endblock %}

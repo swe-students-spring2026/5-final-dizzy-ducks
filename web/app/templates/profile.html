@@ -1,26 +1,69 @@
 {% extends "base.html" %}
-{% block title %}Profile{% endblock %}
+{% block title %}Profile — GigBoard{% endblock %}
 {% block content %}
-
   <section class="panel narrow">
-    <h1 style="margin-top:0;">Your profile</h1>
+    <h1>Your profile</h1>
+    <hr class="divider">
+
     <form method="post">
       <label>
-        Name
-        <input name="name" type="text" value="{{ user.name or '' }}" />
+        Display name
+        <input name="name" type="text" value="{{ user.name or '' }}" autocomplete="name"
+               placeholder="Your full name">
       </label>
       <label>
-        Email
-        <input type="text" value="{{ user.email or 'unknown' }}" disabled />
+        Email address
+        <input type="email" value="{{ user.email or '' }}" disabled>
       </label>
       <label>
-        Tags <span class="hint">(comma-separated, e.g. tutoring, moving)</span>
-        <input name="tags" type="text" value="{{ user.get('tags', []) | join(', ') }}" />
+        Interested tags
+        <span class="hint">Comma-separated. Valid: tutoring, delivery, pet-care, event-help, tech-support, yard-work</span>
+        <input name="tags" type="text" value="{{ tags | join(', ') }}"
+               placeholder="e.g. tutoring, delivery">
       </label>
+
+      <div>
+        <p style="font-size:0.9rem; font-weight:600; color:var(--text-2); margin-bottom:0.5rem;">Email notifications</p>
+        {% set prefs = user.get('notification_preferences') or {} %}
+        <div style="border:1.5px solid var(--border); border-radius:var(--r-sm); padding:0.25rem 0.75rem;">
+          <div class="pref-row">
+            <input type="checkbox" id="pref_new_gig" name="new_gig_alerts"
+                   {% if prefs.get('new_gig_alerts', True) %}checked{% endif %}>
+            <label for="pref_new_gig">
+              New gig alerts
+              <span class="pref-desc">Email me when a new gig matches my tags</span>
+            </label>
+          </div>
+          <div class="pref-row">
+            <input type="checkbox" id="pref_app" name="application_alerts"
+                   {% if prefs.get('application_alerts', True) %}checked{% endif %}>
+            <label for="pref_app">
+              Application alerts
+              <span class="pref-desc">Email me when someone applies to one of my gigs</span>
+            </label>
+          </div>
+          <div class="pref-row">
+            <input type="checkbox" id="pref_status" name="status_alerts"
+                   {% if prefs.get('status_alerts', True) %}checked{% endif %}>
+            <label for="pref_status">
+              Status updates
+              <span class="pref-desc">Email me when my application is accepted or rejected</span>
+            </label>
+          </div>
+          <div class="pref-row">
+            <input type="checkbox" id="pref_digest" name="weekly_digest"
+                   {% if prefs.get('weekly_digest', True) %}checked{% endif %}>
+            <label for="pref_digest">
+              Weekly digest
+              <span class="pref-desc">Monday morning summary of new matching gigs</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
-        <button type="submit">Save</button>
+        <button type="submit">Save changes</button>
       </div>
     </form>
   </section>
-
 {% endblock %}

@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Applicants — {{ gig.title }}{% endblock %}
 {% block content %}
-
-  <section class="panel panel-row">
+  <section class="panel panel-row" style="align-items:flex-start;">
     <div class="stack">
-      <h1 style="margin:0;">Applicants</h1>
-      <p class="meta" style="margin:0;">
+      <h1>Applicants</h1>
+      <p class="meta">
         {{ gig.title }} &middot;
         <span class="badge badge-{{ gig.status or 'open' }}">{{ gig.status or "open" }}</span>
       </p>
     </div>
-    <a class="secondary-button" href="{{ url_for('management.my_gigs') }}">Back</a>
+    <a class="secondary-button" href="{{ url_for('management.my_gigs') }}">← Back to my gigs</a>
   </section>
 
   {% if enriched %}
@@ -20,40 +19,52 @@
         {% set user = row.applicant %}
         {% set stats = row.stats %}
         <article class="gig-card">
-          <div class="panel-row" style="align-items:flex-start;">
-            <div class="stack" style="flex:1;">
-              <div>
-                <strong>{{ user.name or "Unnamed" }}</strong>
-                <span class="meta"> · {{ user.email or "no email" }}</span>
-              </div>
-              <p class="meta" style="margin:0;">
-                ⭐ {{ stats.rating_avg }} ({{ stats.rating_count }} ratings) &middot;
-                {{ stats.jobs_completed }} jobs completed &middot;
+          <div class="panel-row" style="align-items:flex-start; gap:1.25rem;">
+            <div class="stack" style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <strong style="font-size:1rem;">{{ user.name or "Unnamed" }}</strong>
+                <span class="meta">{{ user.email or "no email" }}</span>
                 <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
+              </div>
+              <p class="meta">
+                ⭐ {{ stats.rating_avg }} ({{ stats.rating_count }} ratings) &middot;
+                {{ stats.jobs_completed }} jobs completed
               </p>
               {% if app.message %}
-                <p style="margin:0; white-space: pre-wrap;">{{ app.message }}</p>
+                <hr class="divider" style="margin:0.5rem 0;">
+                <p style="white-space:pre-wrap; font-size:0.925rem;">{{ app.message }}</p>
+              {% endif %}
+              {% if app.answers %}
+                <hr class="divider" style="margin:0.5rem 0;">
+                {% for qa in app.answers %}
+                  <p style="font-weight:600; margin-bottom:0.15rem; font-size:0.875rem;">{{ qa.question }}</p>
+                  <p style="white-space:pre-wrap; font-size:0.875rem; margin-bottom:0.5rem;">{{ qa.answer or "(no answer)" }}</p>
+                {% endfor %}
               {% endif %}
             </div>
-            <div class="stack" style="min-width:160px;">
-              <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision">
-                <input type="hidden" name="action" value="accept" />
-                <button type="submit">Accept</button>
-              </form>
-              <form method="post" action="/my/gigs/{{ gig._id }}/applications/{{ app._id }}/decision" style="margin-top:0.5rem;">
-                <input type="hidden" name="action" value="reject" />
-                <button type="submit" style="background:#c0392b;">Reject</button>
-              </form>
-            </div>
+            {% if app.status == 'pending' %}
+              <div class="applicant-actions">
+                <form method="post"
+                      action="/my/gigs/{{ gig._id or gig.id }}/applications/{{ app._id or app.id }}/decision">
+                  <input type="hidden" name="action" value="accept">
+                  <button type="submit">✓ Accept</button>
+                </form>
+                <form method="post"
+                      action="/my/gigs/{{ gig._id or gig.id }}/applications/{{ app._id or app.id }}/decision">
+                  <input type="hidden" name="action" value="reject">
+                  <button type="submit" class="danger">✕ Reject</button>
+                </form>
+              </div>
+            {% endif %}
           </div>
         </article>
       {% endfor %}
     </div>
   {% else %}
     <section class="panel empty-state">
-      <h2>No applications yet.</h2>
-      <p>Check back later.</p>
+      <span class="empty-state-icon">📬</span>
+      <h2>No applications yet</h2>
+      <p>Share your gig to start receiving applicants.</p>
     </section>
   {% endif %}
-
 {% endblock %}

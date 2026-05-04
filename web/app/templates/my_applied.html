@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}My applications{% endblock %}
+{% block title %}My applications — GigBoard{% endblock %}
 {% block content %}
-
   <section class="panel dashboard-header">
-    <div>
-      <h1 style="margin:0;">My applications</h1>
-      <p style="margin:0;" class="meta">{{ rows|length }} {{ "application" if rows|length == 1 else "applications" }}</p>
+    <div class="stack">
+      <h1>My applications</h1>
+      <p class="meta">{{ rows|length }} {{ "application" if rows|length == 1 else "applications" }}</p>
     </div>
+    <a class="secondary-button" href="{{ url_for('dashboard.index') }}">Browse gigs</a>
   </section>
 
   {% if rows %}
@@ -14,22 +14,31 @@
       {% for row in rows %}
         {% set app = row.application %}
         {% set gig = row.gig %}
-        <article class="gig-card">
+        <article class="gig-card" data-category="{{ gig.category if gig else '' }}">
           <div class="panel-row" style="align-items:flex-start;">
-            <div class="stack">
-              <h2 style="margin:0;">
-                {% if gig %}{{ gig.title }}{% else %}<span class="meta">Gig removed</span>{% endif %}
-              </h2>
-              <p class="meta" style="margin:0;">
-                {% if gig %}{{ gig.category or "uncategorized" }} &middot;{% endif %}
-                Application: <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
-              </p>
+            <div class="stack" style="flex:1; min-width:0;">
+              {% if gig %}
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                  <span class="cat-badge" data-category="{{ gig.category }}">{{ tag_labels.get(gig.category, gig.category) }}</span>
+                  <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
+                </div>
+                <h2>{{ gig.title }}</h2>
+                <p class="meta">
+                  {% if gig.location %}📍 {{ gig.location }}{% endif %}
+                  {% if gig.date %} &middot; 📅 {{ gig.date }}{% endif %}
+                  {% if gig.pay %} &middot; <span class="pay">{{ gig.pay }}</span>{% endif %}
+                </p>
+              {% else %}
+                <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
+                <h2 class="meta">Gig removed</h2>
+              {% endif %}
               {% if app.message %}
-                <p class="hint" style="margin:0;">"{{ app.message | truncate(120) }}"</p>
+                <p class="hint" style="font-style:italic;">"{{ app.message | truncate(120) }}"</p>
               {% endif %}
             </div>
             {% if gig %}
-              <a class="secondary-button" href="{{ url_for('gigs.gig_detail', gig_id=gig._id) }}">View gig</a>
+              <a class="secondary-button"
+                 href="{{ url_for('gigs.gig_detail', gig_id=gig._id or gig.id) }}">View gig</a>
             {% endif %}
           </div>
         </article>
@@ -37,9 +46,12 @@
     </div>
   {% else %}
     <section class="panel empty-state">
-      <h2>No applications yet.</h2>
-      <p>Browse open gigs and apply to get started.</p>
+      <span class="empty-state-icon">📩</span>
+      <h2>No applications yet</h2>
+      <p>Browse open gigs and apply to ones that interest you.</p>
+      <div class="actions">
+        <a class="secondary-button" href="{{ url_for('dashboard.index') }}">Browse gigs</a>
+      </div>
     </section>
   {% endif %}
-
 {% endblock %}

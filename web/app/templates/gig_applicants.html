@@ -26,10 +26,7 @@
                 <span class="meta">{{ user.email or "no email" }}</span>
                 <span class="badge badge-{{ app.status or 'pending' }}">{{ app.status or "pending" }}</span>
               </div>
-              <p class="meta">
-                ⭐ {{ stats.rating_avg }} ({{ stats.rating_count }} ratings) &middot;
-                {{ stats.jobs_completed }} jobs completed
-              </p>
+
               {% if app.message %}
                 <hr class="divider" style="margin:0.5rem 0;">
                 <p style="white-space:pre-wrap; font-size:0.925rem;">{{ app.message }}</p>

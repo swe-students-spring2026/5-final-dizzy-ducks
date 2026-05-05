@@ -138,7 +138,7 @@ pytest tests/ --cov=email_worker --cov-report=term-missing
 MONGO_URI=mongodb://mongo:27017
 MONGO_DB=campus_gigs
 SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-FROM_EMAIL=noreply@yourdomain.com
+FROM_EMAIL=nyugigs@hotmail.com
 POLL_INTERVAL=60
 ```
 
@@ -183,7 +183,7 @@ Set these in the [Vercel dashboard → Settings → Environment Variables](https
 | `MONGO_URI` | Yes (prod) | MongoDB Atlas connection string, e.g. `mongodb+srv://…` |
 | `MONGO_DB` | No | Database name. Defaults to `campus_gigs` |
 | `SENDGRID_API_KEY` | Yes | SendGrid API key — enables email notifications |
-| `FROM_EMAIL` | No | Sender address. Defaults to `noreply@gigboard.app` |
+| `FROM_EMAIL` | No | Sender address. Set to `nyugigs@hotmail.com` for production. |
 
 > Without `MONGO_URI`, the app runs in **in-memory mode** (data resets on each cold start). Set `MONGO_URI` to a MongoDB Atlas cluster for persistent data.
 

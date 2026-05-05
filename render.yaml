@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: dizzy-ducks-web
+    runtime: docker
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DB
+        value: campus_gigs
+      - key: ENABLE_DEV_AUTH
+        value: 0
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true

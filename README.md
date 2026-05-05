@@ -24,6 +24,8 @@ Gigboard is a campus gig marketplace built for students. Users can post short-te
 - Email notifications via SendGrid for new gig matches, application receipts, and status changes
 - Profile page: update name, tags, and email notification preferences
 
+> **Note on email delivery:** On the live deployed site, emails are sent once daily at 9:00 AM UTC to stay within free-tier limits — free deployment platforms do not support multiple email batches per day. The original design polls MongoDB every 60 seconds for near-immediate delivery, but that behavior is only available when running locally with Docker Compose (`docker compose up --build`).
+
 ## Quick Start (Docker Compose)
 
 ### 1. Clone the repository

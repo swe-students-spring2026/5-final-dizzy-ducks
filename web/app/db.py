@@ -17,18 +17,26 @@ def _make_client(uri: str):
     if uri.startswith("mongomock://"):
         import mongomock  # noqa: PLC0415
         return mongomock.MongoClient()
-    return MongoClient(uri)
+    # Use a short timeout so serverless cold starts fail fast if Atlas is unreachable
+    # (e.g. IP not whitelisted). Vercel functions have dynamic IPs; Atlas must allow 0.0.0.0/0.
+    return MongoClient(uri, serverSelectionTimeoutMS=5000)
 
 
 def init_mongo(app: Flask) -> None:
-    client = _make_client(app.config["MONGO_URI"])
-    db = client[app.config["MONGO_DB"]]
-    app.extensions["mongo_client"] = client
-    app.extensions["mongo_db"] = db
+    try:
+        client = _make_client(app.config["MONGO_URI"])
+        db = client[app.config["MONGO_DB"]]
+        app.extensions["mongo_client"] = client
+        app.extensions["mongo_db"] = db
+    except Exception as exc:  # noqa: BLE001
+        app.logger.warning("MongoDB unavailable (%s) — using in-memory store", exc)
+        app.extensions["mongo_client"] = None
+        app.extensions["mongo_db"] = None
 
     @app.before_request
     def _ensure_mongo():
-        _ensure_handle()
+        if app.extensions.get("mongo_client") is not None:
+            _ensure_handle()
 
 
 def _ensure_handle() -> MongoHandle:

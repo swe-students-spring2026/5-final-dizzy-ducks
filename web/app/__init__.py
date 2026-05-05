@@ -96,7 +96,7 @@ def _configure_template_loader(app: Flask) -> None:
 
 def _build_repository(app: Flask):
     mongo_uri = _repository_mongo_uri(app)
-    if mongo_uri:
+    if mongo_uri and app.extensions.get("mongo_client") is not None:
         return MongoRepository(
             client=app.extensions["mongo_client"],
             db_name=app.config["MONGO_DB"],

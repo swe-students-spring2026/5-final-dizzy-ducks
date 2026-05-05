@@ -16,6 +16,7 @@ from web.tags import TAG_LABELS
 from .blueprints.dev_auth import bp as dev_auth_bp
 from .blueprints.gigs import bp as gigs_bp
 from .blueprints.management import bp as management_bp
+from .blueprints.notify import bp as notify_bp
 from .blueprints.profile import bp as profile_bp
 from .db import close_mongo, init_mongo
 
@@ -59,6 +60,7 @@ def create_app(test_config: dict | None = None, repository=None) -> Flask:
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(management_bp)
+    app.register_blueprint(notify_bp)
     app.register_blueprint(profile_bp)
 
     @app.context_processor

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-import mongomock
 from flask import Flask, current_app, g
 from pymongo import MongoClient
 
@@ -16,6 +15,7 @@ class MongoHandle:
 
 def _make_client(uri: str):
     if uri.startswith("mongomock://"):
+        import mongomock  # noqa: PLC0415
         return mongomock.MongoClient()
     return MongoClient(uri)
 

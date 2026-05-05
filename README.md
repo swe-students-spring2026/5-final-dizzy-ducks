@@ -8,21 +8,21 @@ Dizzy Ducks is a campus gig marketplace where students can post short-term jobs,
 ## Team
 
 - [antoniojacksnn](https://github.com/antoniojacksnn)
-- [ClaireBocz](https://github.com/ClaireBocz)
 - [FilthyS](https://github.com/FilthyS)
 - [harrisonmangitwong](https://github.com/harrisonmangitwong)
 - [sashacartagena](https://github.com/sashacartagena)
+- [ClaireBocz](https://github.com/ClaireBocz)
 
 ## Features
 
 - Sign up, log in, and choose job category tags during onboarding
-- Post gigs with title, category, pay, location, date, description, and optional custom questions
 - Browse and search open gigs by keyword or category tag
-- Apply to gigs with a message and answers to any required questions
+- Post gigs with title, category, pay, location, date, description, and optional custom questions
 - Poster dashboard: view all posted gigs and incoming applications; accept or reject applicants
+- Apply to gigs with a message and answers to any required questions
 - Applicant dashboard: track every application and its current status
-- Profile page: update name, tags, and email notification preferences
 - Email notifications via SendGrid for new gig matches, application receipts, status changes, and weekly digests
+- Profile page: update name, tags, and email notification preferences
 
 ## Architecture
 

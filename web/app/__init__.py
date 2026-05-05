@@ -71,6 +71,18 @@ def create_app(test_config: dict | None = None, repository=None) -> Flask:
     def healthz():
         return {"ok": True}
 
+    @app.get("/debug/db")
+    def debug_db():
+        from web.repositories import InMemoryRepository  # noqa: PLC0415
+        uri = app.config.get("MONGO_URI", "not set")
+        masked = uri[:20] + "..." if len(uri) > 20 else uri
+        return {
+            "repository": type(app.repository).__name__,
+            "mongo_connected": app.extensions.get("mongo_client") is not None,
+            "mongo_uri_prefix": masked,
+            "mongo_db": app.config.get("MONGO_DB"),
+        }
+
     app.teardown_appcontext(close_mongo)
     return app
 

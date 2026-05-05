@@ -1,0 +1,20 @@
+name: notify-cron
+
+on:
+  schedule:
+    # Runs every 5 minutes. GitHub Actions minimum is 5 min; actual timing may
+    # vary by a few minutes under high load — acceptable for notifications.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: # allow manual trigger from the Actions tab
+
+jobs:
+  ping:
+    name: Drain notification queue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/notify
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://dizzy-ducks-gigboard.vercel.app/api/notify \
+            || echo "notify endpoint returned non-2xx (no pending notifications or misconfigured)"

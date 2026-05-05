@@ -1,16 +1,21 @@
 import os
+import sys
 from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler
 
 import sendgrid
-from flask import Blueprint, jsonify, request
 from sendgrid.helpers.mail import Mail
+from pymongo import MongoClient
 
-from ..db import get_db
-
-bp = Blueprint("notify", __name__)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def _get_pending_notifications(db):
+def get_db():
+    client = MongoClient(os.environ["MONGO_URI"])
+    return client[os.environ.get("MONGO_DB", "campus_gigs")]
+
+
+def get_pending_notifications(db):
     now = datetime.now(timezone.utc)
     return list(db.notifications.find({
         "status": "pending",
@@ -22,12 +27,12 @@ def _get_pending_notifications(db):
     }))
 
 
-def _get_user_email(db, user_id):
+def get_user_email(db, user_id):
     user = db.users.find_one({"_id": user_id}, {"email": 1})
     return user.get("email") if user else None
 
 
-def _mark_as_sent(db, notification_id, provider_message_id=None):
+def mark_as_sent(db, notification_id, provider_message_id=None):
     db.notifications.update_one(
         {"_id": notification_id},
         {"$set": {
@@ -38,14 +43,14 @@ def _mark_as_sent(db, notification_id, provider_message_id=None):
     )
 
 
-def _mark_as_failed(db, notification_id):
+def mark_as_failed(db, notification_id):
     db.notifications.update_one(
         {"_id": notification_id},
         {"$set": {"status": "failed"}}
     )
 
 
-def _format_notification(n):
+def format_notification(n):
     subject = n.get("subject")
     body = n.get("body")
     if subject and body:
@@ -77,7 +82,7 @@ def _format_notification(n):
     return "GigBoard Notification", "You have a new notification."
 
 
-def _send_email(to, subject, body):
+def send_email(to, subject, body):
     sg = sendgrid.SendGridAPIClient(os.environ["SENDGRID_API_KEY"])
     message = Mail(
         from_email=os.environ.get("FROM_EMAIL", "noreply@gigboard.com"),
@@ -89,29 +94,35 @@ def _send_email(to, subject, body):
     return response.status_code, response.headers.get("X-Message-Id")
 
 
-@bp.post("/notify")
-def notify():
-    secret = os.environ.get("CRON_SECRET")
-    if secret and request.headers.get("Authorization") != f"Bearer {secret}":
-        return jsonify({"error": "unauthorized"}), 401
-
+def run_tick():
     db = get_db()
-    notifications = _get_pending_notifications(db)
+    notifications = get_pending_notifications(db)
     sent, failed = 0, 0
-
     for n in notifications:
-        to_email = _get_user_email(db, n["to_user_id"])
+        to_email = get_user_email(db, n["to_user_id"])
         if not to_email:
-            _mark_as_failed(db, n["_id"])
+            mark_as_failed(db, n["_id"])
             failed += 1
             continue
-        subject, body = _format_notification(n)
-        status_code, message_id = _send_email(to_email, subject, body)
+        subject, body = format_notification(n)
+        status_code, message_id = send_email(to_email, subject, body)
         if status_code == 202:
-            _mark_as_sent(db, n["_id"], provider_message_id=message_id)
+            mark_as_sent(db, n["_id"], provider_message_id=message_id)
             sent += 1
         else:
-            _mark_as_failed(db, n["_id"])
+            mark_as_failed(db, n["_id"])
             failed += 1
+    return sent, failed
 
-    return jsonify({"sent": sent, "failed": failed})
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        sent, failed = run_tick()
+        body = f"sent={sent} failed={failed}".encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        self.do_GET()

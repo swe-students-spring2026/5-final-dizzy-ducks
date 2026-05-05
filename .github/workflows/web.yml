@@ -14,15 +14,6 @@ on:
       - "vercel.json"
   pull_request:
     branches: [main, master]
-    paths:
-      - "web/**"
-      - "api/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - "Pipfile"
-      - "Pipfile.lock"
-      - "requirements.txt"
-      - "vercel.json"
 
 jobs:
   test:

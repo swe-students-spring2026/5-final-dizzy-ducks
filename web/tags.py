@@ -5,6 +5,7 @@ JOB_TAGS = (
     "event-help",
     "tech-support",
     "yard-work",
+    "other",
 )
 
 TAG_LABELS = {
@@ -14,6 +15,7 @@ TAG_LABELS = {
     "event-help": "Event help",
     "tech-support": "Tech support",
     "yard-work": "Yard work",
+    "other": "Other",
 }
 
 

@@ -5,10 +5,11 @@ on:
     branches: [main, master]
     paths:
       - "email-worker/**"
+      - ".github/workflows/worker.yml"
   pull_request:
-    branches: [main, master]
     paths:
       - "email-worker/**"
+      - ".github/workflows/worker.yml"
 
 jobs:
   test:

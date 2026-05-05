@@ -10,7 +10,7 @@ load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@gigboard.com")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "nyugigs@hotmail.com")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", 60))
 
 

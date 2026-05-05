@@ -65,6 +65,23 @@ def new_gig():
     )
 
 
+@bp.post("/my/gigs/<gig_id>/delete")
+@login_required
+def delete_gig(gig_id: str):
+    db = get_db()
+    gig = db.gigs.find_one({"_id": _oid(gig_id)})
+    if not gig:
+        abort(404)
+    require_poster(gig)
+
+    db.gigs.delete_one({"_id": gig["_id"]})
+    db.applications.delete_many({"gig_id": gig["_id"]})
+    db.notifications.delete_many({"payload.gig_id": gig["_id"]})
+
+    flash("Gig deleted.", "success")
+    return redirect(url_for("management.my_gigs"))
+
+
 @bp.get("/my/gigs/<gig_id>")
 @login_required
 def gig_applicants(gig_id: str):
@@ -277,14 +294,40 @@ def _validate_gig_form(values: dict[str, str]) -> list[str]:
 
 def _create_gig(values: dict[str, str], questions: list[dict]) -> None:
     if "_id" in g.user:
+        now = datetime.now(timezone.utc)
         document = {
             **values,
             "poster_id": g.user["_id"],
             "status": "open",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": now,
             "questions": questions,
         }
-        get_db().gigs.insert_one(document)
+        db = get_db()
+        result = db.gigs.insert_one(document)
+
+        category = values.get("category")
+        if category:
+            matching_users = db.users.find({
+                "notification_preferences.tags": category,
+                "notification_preferences.new_gig_alerts": True,
+                "_id": {"$ne": g.user["_id"]},
+            }, {"_id": 1})
+
+            for user in matching_users:
+                db.notifications.update_one(
+                    {"dedupe_key": f"new_gig:{result.inserted_id}:{user['_id']}"},
+                    {"$setOnInsert": {
+                        "type": "new_gig",
+                        "status": "pending",
+                        "to_user_id": user["_id"],
+                        "payload": {
+                            "gig_id": result.inserted_id,
+                            "gig_title": values.get("title"),
+                        },
+                        "created_at": now,
+                    }},
+                    upsert=True,
+                )
         return
 
     current_app.repository.create_gig(

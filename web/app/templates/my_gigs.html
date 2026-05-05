@@ -26,10 +26,20 @@
                 {% if gig.pay %} &middot; <span class="pay">{{ gig.pay }}</span>{% endif %}
               </p>
             </div>
-            <a class="secondary-button"
-               href="{{ url_for('management.gig_applicants', gig_id=gig._id or gig.id) }}">
-              View applicants
-            </a>
+            <div style="display:flex; gap:0.5rem;">
+              <a class="secondary-button"
+                 href="{{ url_for('management.gig_applicants', gig_id=gig._id or gig.id) }}">
+                View applicants
+              </a>
+              <form method="post"
+                    action="{{ url_for('management.delete_gig', gig_id=gig._id or gig.id) }}"
+                    onsubmit="return confirm('Delete this gig? This cannot be undone.')">
+                <button type="submit" class="secondary-button"
+                        style="background:var(--error, #c0392b); color:#fff; border-color:transparent;">
+                  Delete
+                </button>
+              </form>
+            </div>
           </div>
         </article>
       {% endfor %}

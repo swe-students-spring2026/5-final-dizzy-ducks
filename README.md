@@ -21,7 +21,7 @@ Gigboard is a campus gig marketplace built for students. Users can post short-te
 - Poster dashboard: view all posted gigs and incoming applications; accept or reject applicants
 - Apply to gigs with a message and answers to any required questions
 - Applicant dashboard: track every application and its current status
-- Email notifications via SendGrid for new gig matches, application receipts, status changes, and weekly digests
+- Email notifications via SendGrid for new gig matches, application receipts, and status changes
 - Profile page: update name, tags, and email notification preferences
 
 ## Quick Start (Docker Compose)

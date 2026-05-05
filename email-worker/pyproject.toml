@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+addopts = "-ra -q --cov=email_worker --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["email_worker"]

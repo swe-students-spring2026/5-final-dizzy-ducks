@@ -151,6 +151,58 @@ ENABLE_DEV_AUTH=1
 
 
 
+## Deployment (Vercel)
+
+The app is live at **[https://dizzy-ducks-gigboard.vercel.app](https://dizzy-ducks-gigboard.vercel.app)**.
+
+The Flask web app runs as a Python Serverless Function and the email notification worker runs as a **Vercel Cron** job (daily at 09:00 UTC). Both are defined in the repository root and deploy in a single `vercel --prod` step.
+
+### Architecture on Vercel
+
+| Component | How it runs |
+| --- | --- |
+| Web app (`api/index.py`) | Python Serverless Function — all HTTP requests rewritten here by `vercel.json` |
+| Email worker (`web/app/blueprints/notify.py`) | `GET /api/notify` triggered daily by Vercel Cron; sends pending notifications via SendGrid |
+
+### Deploy manually
+
+```bash
+npm install -g vercel@latest   # one-time install
+vercel --prod                  # deploys from repo root
+```
+
+### Required Vercel environment variables
+
+Set these in the [Vercel dashboard → Settings → Environment Variables](https://vercel.com/antonio-1cdd85f0/dizzy-ducks-gigboard/settings/environment-variables):
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `SECRET_KEY` | Yes | Long random string for Flask session signing |
+| `MONGO_URI` | Yes (prod) | MongoDB Atlas connection string, e.g. `mongodb+srv://…` |
+| `MONGO_DB` | No | Database name. Defaults to `campus_gigs` |
+| `SENDGRID_API_KEY` | Yes | SendGrid API key — enables email notifications |
+| `FROM_EMAIL` | No | Sender address. Defaults to `noreply@gigboard.app` |
+
+> Without `MONGO_URI`, the app runs in **in-memory mode** (data resets on each cold start). Set `MONGO_URI` to a MongoDB Atlas cluster for persistent data.
+
+> Without `SENDGRID_API_KEY`, the cron job skips sending and logs a warning — no errors thrown.
+
+### GitHub Actions auto-deploy
+
+Push to `main` → tests pass → Vercel production deployment is triggered automatically.
+
+Add these three secrets to GitHub → Settings → Secrets → Actions:
+
+| Secret | Where to find it |
+| --- | --- |
+| `VERCEL_TOKEN` | [Vercel Account Settings → Tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | `.vercel/project.json` → `orgId` |
+| `VERCEL_PROJECT_ID` | `.vercel/project.json` → `projectId` |
+
+Also add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` to build and push Docker images to Docker Hub on each merge.
+
+---
+
 ## Importing Starter Data
 
 The web app seeds a small set of sample gigs automatically when running in in-memory mode (no `MONGO_URI`). For a production MongoDB instance, seed data can be inserted manually. A future `seed.py` script can be added to `web/` if needed.

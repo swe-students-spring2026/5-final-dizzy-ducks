@@ -40,15 +40,12 @@ def update_me():
     new_gig_alerts = request.form.get("new_gig_alerts") == "on"
     application_alerts = request.form.get("application_alerts") == "on"
     status_alerts = request.form.get("status_alerts") == "on"
-    weekly_digest = request.form.get("weekly_digest") == "on"
-
     updates: dict = {
         "tags": tags,
         "notification_preferences.tags": tags,
         "notification_preferences.new_gig_alerts": new_gig_alerts,
         "notification_preferences.application_alerts": application_alerts,
         "notification_preferences.status_alerts": status_alerts,
-        "notification_preferences.weekly_digest": weekly_digest,
     }
     if name:
         updates["name"] = name
@@ -64,7 +61,6 @@ def update_me():
                 "new_gig_alerts": new_gig_alerts,
                 "application_alerts": application_alerts,
                 "status_alerts": status_alerts,
-                "weekly_digest": weekly_digest,
             },
         )
 
